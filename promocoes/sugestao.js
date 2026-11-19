@@ -1,6 +1,6 @@
 import { chaveEstoque, criarConsultaDeEstoque, lerEstoque } from './estoque.js?v=1';
 import { copiarTexto, dadosDaFicha, lerCatalogo, marcas } from './produtos.js?v=2';
-import { interpretarPedido, montarAbordagem, nomesIndicadores, recomendarPedido } from './recomendacao.js?v=2';
+import { interpretarPedido, montarAbordagem, nomesIndicadores, recomendarPedido } from './recomendacao.js?v=3';
 import { reais } from './vendas.js?v=3';
 
 const obter = id => document.getElementById(id);
@@ -10,10 +10,19 @@ const estado = obter('pedido-estado');
 const introducao = obter('pedido-introducao');
 const recados = obter('pedido-recados');
 const resultados = obter('pedido-resultados');
+const resumo = obter('pedido-resumo');
+const paginacao = obter('pedido-paginacao');
+const seletorPagina = obter('pedido-pagina');
+const anterior = obter('pedido-anterior');
+const proxima = obter('pedido-proxima');
+const soComEstoque = obter('pedido-somente-estoque');
 const molde = obter('molde-recomendacao');
 const numeros = new Intl.NumberFormat('pt-BR');
+const porPagina = 8;
 let carregamento;
 let versaoDoPedido = 0;
+let opcoes = [];
+let pagina = 0;
 
 function lerProdutos() {
   if (!carregamento) {
@@ -35,8 +44,10 @@ function paragrafo(texto) {
 }
 
 function atualizarEstoque() {
-  obter('pedido-estoque').textContent = lerEstoque()
-    ? 'Estoque importado. As sugestões usam saldos positivos.'
+  const importado = Boolean(lerEstoque());
+  obter('pedido-estoque-filtro').hidden = !importado;
+  obter('pedido-estoque').textContent = importado
+    ? 'Estoque importado neste navegador.'
     : 'Estoque sem consulta neste navegador.';
 }
 
@@ -60,13 +71,17 @@ function montarCartao(recomendacao, indice) {
   selecionar('.rec-marca').textContent = `${marcas[produto.marca].nome} · ${produto.tipo}`;
   selecionar('.rec-nome').textContent = produto.nome;
   selecionar('.rec-preco').textContent = reais(produto.preco);
-  if (produto.anterior > produto.preco) {
-    const anterior = selecionar('.rec-anterior');
-    anterior.hidden = false;
-    anterior.textContent = reais(produto.anterior);
+  const promocional = produto.anterior > produto.preco;
+  const tipoPreco = selecionar('.rec-tipo-preco');
+  tipoPreco.textContent = promocional ? 'Em promoção' : 'Preço de catálogo';
+  tipoPreco.classList.toggle('preco-promocional', promocional);
+  if (promocional) {
+    const precoAnterior = selecionar('.rec-anterior');
+    precoAnterior.hidden = false;
+    precoAnterior.textContent = reais(produto.anterior);
   }
   selecionar('.rec-saldo').textContent = [
-    saldo > 0 ? `${numeros.format(saldo)} un. na planilha` : 'Estoque a confirmar',
+    Number.isFinite(saldo) ? `${numeros.format(saldo)} un. na planilha` : 'Estoque a confirmar',
     produto.edicao,
   ].join(' · ');
   selecionar('.rec-motivos').textContent = abordagem.motivos.join(' ');
@@ -94,6 +109,19 @@ function montarCartao(recomendacao, indice) {
   return cartao;
 }
 
+function exibirPagina(indice) {
+  pagina = indice;
+  const inicio = pagina * porPagina;
+  const lista = opcoes.slice(inicio, inicio + porPagina);
+  resultados.replaceChildren(...lista.map((item, i) => montarCartao(item, inicio + i)));
+  obter('pedido-progresso').textContent = opcoes.length === 1 ? '1 opção encontrada'
+    : `Opções ${numeros.format(inicio + 1)} a ${numeros.format(inicio + lista.length)} de ${numeros.format(opcoes.length)}`;
+  seletorPagina.value = pagina;
+  anterior.disabled = pagina === 0;
+  proxima.disabled = inicio + lista.length >= opcoes.length;
+  obter('pedido-resultado-titulo').focus();
+}
+
 function mostrarResultado(pedido, recomendacoes) {
   introducao.hidden = true;
   if (pedido.itens.length) {
@@ -114,10 +142,22 @@ function mostrarResultado(pedido, recomendacoes) {
     recados.append(detalhes);
   }
   for (const aviso of recomendacoes.avisos) recados.append(paragrafo(aviso));
-  recomendacoes.escolhidas.forEach((item, indice) => resultados.append(montarCartao(item, indice)));
-  const total = recomendacoes.escolhidas.length;
-  estado.textContent = total ? `${total} ${total === 1 ? 'sugestão encontrada' : 'sugestões encontradas'}.` : 'Confira o pedido e os filtros.';
-  obter('pedido-resultado-titulo').focus();
+  opcoes = recomendacoes.opcoes;
+  estado.textContent = opcoes.length ? '' : 'Confira o pedido e os filtros.';
+  if (!opcoes.length) {
+    obter('pedido-resultado-titulo').focus();
+    return;
+  }
+
+  const minimo = opcoes[0].produto.preco;
+  const maximo = opcoes.at(-1).produto.preco;
+  obter('pedido-faixa').textContent = minimo === maximo ? reais(minimo)
+    : `Do menor ao maior preço · ${reais(minimo)} a ${reais(maximo)}`;
+  const totalPaginas = Math.ceil(opcoes.length / porPagina);
+  seletorPagina.replaceChildren(...Array.from({ length: totalPaginas }, (_, i) => new Option(`Página ${i + 1} de ${totalPaginas}`, i)));
+  resumo.hidden = false;
+  paginacao.hidden = totalPaginas === 1;
+  exibirPagina(0);
 }
 
 formulario.addEventListener('submit', async evento => {
@@ -128,9 +168,8 @@ formulario.addEventListener('submit', async evento => {
     estado.textContent = texto ? 'Marque pelo menos um indicador pendente.' : 'Informe os itens do pedido.';
     return;
   }
-  const versao = ++versaoDoPedido;
-  recados.replaceChildren();
-  resultados.replaceChildren();
+  limparResultado();
+  const versao = versaoDoPedido;
   introducao.hidden = true;
   botao.disabled = true;
   estado.textContent = 'Conferindo os dois catálogos…';
@@ -143,7 +182,8 @@ formulario.addEventListener('submit', async evento => {
     const recomendacoes = recomendarPedido({
       produtos, pedido, indicadores, marcaInformada: obter('pedido-marca').value,
       limite: limiteDigitado ? Number(limiteDigitado) : null,
-      temEstoque: Boolean(estoque), consultarSaldo: criarConsultaDeEstoque(estoque),
+      somenteComEstoque: Boolean(estoque) && soComEstoque.checked,
+      consultarSaldo: criarConsultaDeEstoque(estoque),
     });
     mostrarResultado(pedido, recomendacoes);
   } catch {
@@ -158,12 +198,17 @@ formulario.addEventListener('submit', async evento => {
 
 function limparResultado(aviso = '') {
   versaoDoPedido++;
+  opcoes = [];
   recados.replaceChildren();
   resultados.replaceChildren();
+  resumo.hidden = paginacao.hidden = true;
   introducao.hidden = false;
   estado.textContent = aviso;
 }
 
+anterior.addEventListener('click', () => exibirPagina(pagina - 1));
+proxima.addEventListener('click', () => exibirPagina(pagina + 1));
+seletorPagina.addEventListener('change', () => exibirPagina(Number(seletorPagina.value)));
 formulario.addEventListener('input', () => limparResultado());
 window.addEventListener('storage', evento => {
   if (evento.key === chaveEstoque || evento.key === null) {

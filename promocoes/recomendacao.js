@@ -93,7 +93,7 @@ function afinidade(produto, pedido, complemento, alvoMultimarca, marcaBase) {
   return 0;
 }
 
-export function recomendarPedido({ produtos, pedido, indicadores, marcaInformada, limite, temEstoque, consultarSaldo }) {
+export function recomendarPedido({ produtos, pedido, indicadores, marcaInformada, limite, somenteComEstoque, consultarSaldo }) {
   const pendentes = new Set(indicadores);
   const avisos = [];
   const marcasDoPedido = new Set(pedido.marcasDoPedido);
@@ -114,7 +114,7 @@ export function recomendarPedido({ produtos, pedido, indicadores, marcaInformada
   for (const produto of produtos) {
     if (pedido.excluidos.has(produto) || nomesNoPedido.has(nomeNormalizado(produto.nome)) || (limite !== null && produto.preco > limite)) continue;
     const saldo = consultarSaldo(produto.sku);
-    if (temEstoque && !(saldo > 0)) continue;
+    if (somenteComEstoque && !(saldo > 0)) continue;
     if (/acess[oó]rios|sacola|embalagem/i.test(produto.tipo) || /^(sacola|embalagem|envelope|caixa de presente|amostra|demonstrador|cat[aá]logo|case para|estojo para)\b/i.test(produto.nome)) continue;
 
     const cobre = [
@@ -126,30 +126,21 @@ export function recomendarPedido({ produtos, pedido, indicadores, marcaInformada
     const complemento = complementar(produto, pedido.itens);
     const prioridade = afinidade(produto, pedido, complemento, alvoMultimarca, marcaBase);
     const temDescricao = Boolean(produto.diferencial || produto.aromas || produto.beneficio);
-    const dependeDeVariante = /^(refil de |base$|corretivo$)/i.test(produto.tipo);
-    candidatas.push({ produto, cobre, saldo, complemento, prioridade, temDescricao, dependeDeVariante });
+    candidatas.push({ produto, cobre, saldo, complemento, prioridade, temDescricao, marcaBase, itemDoPedido: pedido.itens[0] });
   }
 
-  const escolhidas = [];
-  while (pendentes.size) {
-    const ordenadas = candidatas.filter(candidata => candidata.cobre.some(indicador => pendentes.has(indicador)))
-      .sort((a, b) => b.cobre.filter(indicador => pendentes.has(indicador)).length - a.cobre.filter(indicador => pendentes.has(indicador)).length
-        || b.prioridade - a.prioridade || Number(a.dependeDeVariante) - Number(b.dependeDeVariante)
-        || Number(b.temDescricao) - Number(a.temDescricao)
-        || a.produto.preco - b.produto.preco || a.produto.sku.localeCompare(b.produto.sku));
-    if (!ordenadas.length) break;
-    const melhor = ordenadas[0];
-    const cobre = melhor.cobre.filter(indicador => pendentes.has(indicador));
-    escolhidas.push({ ...melhor, cobre, marcaBase, itemDoPedido: pedido.itens[0] });
-    for (const indicador of cobre) pendentes.delete(indicador);
-  }
+  const atendidos = new Set(candidatas.flatMap(candidata => candidata.cobre));
+  const semOpcao = [...pendentes].filter(indicador => !atendidos.has(indicador));
 
-  if (pendentes.size) {
-    const nomes = [...pendentes].map(indicador => nomesIndicadores[indicador]).join(' e ');
-    const condicoes = [temEstoque && 'com saldo positivo', limite !== null && 'dentro do limite'].filter(Boolean).join(' e ');
+  if (semOpcao.length) {
+    const nomes = semOpcao.map(indicador => nomesIndicadores[indicador]).join(' e ');
+    const condicoes = [somenteComEstoque && 'com saldo positivo', limite !== null && 'dentro do limite'].filter(Boolean).join(' e ');
     avisos.push(condicoes ? `Nenhum item para ${nomes} ${condicoes} com este pedido.` : `Nenhum item adequado para ${nomes} com este pedido.`);
   }
-  return { escolhidas, avisos };
+  const opcoes = candidatas.sort((a, b) => a.produto.preco - b.produto.preco
+    || b.cobre.length - a.cobre.length || b.prioridade - a.prioridade
+    || Number(b.temDescricao) - Number(a.temDescricao) || a.produto.sku.localeCompare(b.produto.sku));
+  return { opcoes, avisos };
 }
 
 export function montarAbordagem({ produto, cobre, saldo, complemento, marcaBase, itemDoPedido }) {
@@ -170,9 +161,10 @@ export function montarAbordagem({ produto, cobre, saldo, complemento, marcaBase,
   const precoDaRevista = produto.anterior > produto.preco
     ? `Na revista, está de ${reais(produto.anterior)} por ${preco}.`
     : `O preço de referência na revista é ${preco}.`;
-  const fechamento = saldo > 0
+  let fechamento = saldo > 0
     ? 'Quer testar o interesse das suas clientes e começar com uma unidade?'
     : 'Quer que eu confira a disponibilidade e as condições para você testar com uma unidade?';
+  if (Number.isFinite(saldo) && saldo <= 0) fechamento = 'Quer que eu confira a previsão de reposição para você?';
   return {
     motivos,
     venda,

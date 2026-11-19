@@ -172,6 +172,7 @@ dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
 .pedido-complementos { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: .56rem; }
 .pedido-estoque { display: flex; flex-wrap: wrap; gap: .22rem .5rem; margin: .85rem 0; color: var(--muted); font-size: .86rem; }
 .pedido-estoque a { color: var(--acento); text-underline-offset: .18em; }
+.pedido-form .estoque-filtro { margin: -.3rem 0 .48rem; }
 .pedido-enviar { width: 100%; }
 .pedido-resultados { background: linear-gradient(168deg, #f7ecf0, #f9f3ef 27rem); }
 .pedido-resultados > h3 { font: 650 clamp(1.44rem, 3vw, 2rem)/1.12 var(--titulo); letter-spacing: -.022em; margin-bottom: .72rem; }
@@ -180,7 +181,12 @@ dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
 .pedido-recados:not(:empty) { margin-bottom: .8rem; }
 .pedido-recados p, .pedido-recados details { margin-top: .4rem; }
 .pedido-recados summary { cursor: pointer; font-weight: 650; }
+.pedido-resumo { margin-bottom: .7rem; font-size: .95rem; font-weight: 700; }
+.pedido-resumo .pedido-ajuda { margin-top: .15rem; font-weight: 400; }
 #pedido-resultados { display: grid; gap: .85rem; }
+.pedido-paginacao { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .45rem; margin-top: 1rem; }
+.pedido-paginacao select { min-height: 44px; padding: .4rem .55rem; border: 1px solid #c6b3bc; border-radius: 9px; color: var(--texto); background: var(--superficie); font-size: .9rem; }
+.pedido-paginacao .acao:disabled { cursor: default; }
 .rec-produto { padding: clamp(.8rem, 2.8vw, 1.1rem); border: 1px solid var(--borda); border-radius: 15px; background: var(--superficie); box-shadow: 0 5px 18px #442b3410; animation: surgir .28s ease-out both; }
 .rec-indicadores { display: flex; flex-wrap: wrap; gap: .32rem; margin-bottom: .65rem; }
 .rec-indicadores span { padding: .2rem .54rem; border-radius: 99px; background: #eee1eb; color: #592447; font-size: .78rem; font-weight: 750; }
@@ -189,14 +195,16 @@ dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
 .rec-identidade { min-width: 0; }
 .rec-marca, .rec-saldo { color: var(--muted); font-size: .83rem; line-height: 1.4; }
 .rec-nome { margin: .2rem 0; font-size: clamp(1.15rem, 2.5vw, 1.42rem); line-height: 1.2; overflow-wrap: anywhere; }
-.rec-valores { display: flex; align-items: baseline; gap: .55rem; }
+.rec-valores { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .55rem; }
 .rec-preco { color: var(--acento); font-size: 1.22rem; font-variant-numeric: tabular-nums; }
+.rec-tipo-preco { color: var(--muted); font-size: .76rem; font-weight: 700; }
+.rec-tipo-preco.preco-promocional { color: #843157; }
 .rec-textos { display: grid; gap: .72rem; margin-top: .82rem; }
 .rec-textos h5 { font-size: .95rem; margin-bottom: .14rem; }
 .rec-textos p { color: var(--muted); line-height: 1.48; }
-.rec-mensagem { padding: .75rem; border: 1px solid #e6d5df; border-radius: 10px; background: #f7edf2; }
-.rec-estrategia { margin-bottom: 0; }
-.rec-estrategia .rec-limite-titulo { margin-top: .55rem; color: var(--texto); font-weight: 700; }
+.rec-detalhes { margin-bottom: 0; }
+.rec-detalhes h5 { margin: .7rem 0 .2rem; font-size: .92rem; }
+.rec-mensagem { margin-top: .8rem; padding: .75rem; border: 1px solid #e6d5df; border-radius: 10px; background: #f7edf2; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes surgir { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
