@@ -7,7 +7,34 @@
   <meta name="theme-color" content="#240810">
   <title>Dolar até o Iphone vir | Cotação USD/BRL</title>
   <link rel="icon" href="./icone.png" type="image/png">
-  <link rel="stylesheet" href="./estilo.css">
+  <link rel="stylesheet" href="./estilo.css?v=estrela-13">
+  <style>
+    .estrela-celular {
+      display: inline-grid;
+      place-items: center;
+      font-size: clamp(3rem, 7.5vw, 6rem);
+      line-height: 1;
+      font-weight: 900;
+    }
+    .estrela-celular::before,
+    .estrela-celular strong {
+      grid-area: 1 / 1;
+    }
+    .estrela-celular::before {
+      content: "★";
+      color: #ffe27b;
+      text-shadow: 0 0 30px #ffc63a78;
+    }
+    .estrela-celular strong {
+      font-size: .28em;
+      font-weight: inherit;
+      color: #711429;
+      transform: translateY(.12em);
+    }
+    @media (max-width: 490px) {
+      .estrela-celular { font-size: 2.45rem; }
+    }
+  </style>
   <script src="./cotacao.js" type="module"></script>
 </head>
 <body>
@@ -47,7 +74,7 @@
         <div class="orbita"></div>
         <div class="celular">
           <div class="tela">
-            <span class="estrela-celular"><span>★</span><strong>13</strong></span>
+            <div class="estrela-celular"><strong>13</strong></div>
           </div>
         </div>
         <div class="moeda moeda-usd">$</div>
