@@ -4,6 +4,10 @@ export const destaques = {
     argumento: 'O Malbec original é amadeirado, com cedro e especiarias. O álcool vínico envelhecido em carvalho francês é a assinatura dele.',
     pergunta: 'Você gosta de perfume amadeirado, com um toque de especiarias?',
     estrategia: 'Pergunte qual amadeirado a pessoa já usou. Faça a ponte com o cedro e conte a história do carvalho em um áudio curto. Se ela está escolhendo entre versões do Malbec, descubra se quer o original ou prefere o fundo mais adocicado do Black.',
+    revenda: {
+      pergunta: 'Tem clientes que pedem um amadeirado com presença para sair à noite?',
+      estrategia: 'Procure clientes que já compraram Malbec ou outros amadeirados. Grave um áudio curto sobre o cedro e o álcool envelhecido em carvalho, mande junto com a foto do frasco e anote os pedidos antes de decidir o lote.',
+    },
     frio: 'Uma boa ocasião para apresentar o amadeirado é um jantar numa noite mais fria.',
   },
   '84392': {
@@ -51,6 +55,10 @@ export const destaques = {
     diferencial: 'O Eudora Rouge abre com ameixa roxa e tem jasmim e âmbar na composição. É uma boa escolha para quem prefere florais com presença em ocasiões especiais. A sequência fruta, flor e âmbar ajuda a pessoa a imaginar o aroma sem testá-lo.',
     argumento: 'O Eudora Rouge abre com ameixa roxa, traz jasmim e termina com um fundo ambarado. É um floral com presença.',
     pergunta: 'Você gosta de floral com um fundo mais quente, como âmbar?',
+    revenda: {
+      pergunta: 'Suas clientes estão pedindo um floral marcante para ocasiões especiais?',
+      estrategia: 'Mostre a sequência ameixa, jasmim e âmbar em um Status com a foto do frasco. Pergunte às clientes que gostam de florais se preferem um fundo ambarado e use as respostas para estimar o pedido.',
+    },
     frio: 'Se a pessoa quer um perfume para um jantar em uma noite fria, descreva o fundo ambarado do Rouge.',
   },
   '52864': {

@@ -1,5 +1,6 @@
 import { chaveClimaVenda, lerClimaVenda } from '../tempo/clima-venda.js?v=1';
-import { pedidoParaIA, prepararVenda, reais } from './vendas.js?v=1';
+import { chaveEstoque, criarConsultaDeEstoque, importarPlanilha, lerEstoque } from './estoque.js?v=1';
+import { pedidoParaIA, prepararVenda, reais } from './vendas.js?v=2';
 
 const marcas = {
   boticario: { nome: 'O Boticário', revista: 'https://catalogo.boticario.com.br/' },
@@ -17,13 +18,21 @@ const molde = obter('molde-produto');
 const resultados = obter('resultados');
 const objetivoVenda = obter('objetivo-venda');
 const climaVenda = obter('clima-venda');
+const arquivoEstoque = obter('arquivo-estoque');
+const botaoImportar = obter('importar-estoque');
+const botaoRemover = obter('remover-estoque');
+const soDisponiveis = obter('so-disponiveis');
+const estadoEstoque = obter('estoque-estado');
 const quantidade = new Intl.NumberFormat('pt-BR');
+const dataImportacao = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 const ordem = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
 const tamanhoGrupo = 4;
 const principais = ['Perfumaria', 'Cabelo', 'Maquiagem', 'Corpo e Banho', 'Cuidados com a pele'];
 let produtos = [];
 let soMelhores = false;
 let produtoAtual;
+let estoque = lerEstoque();
+let consultarSaldo = criarConsultaDeEstoque(estoque);
 
 function normalizar(texto) {
   return String(texto ?? '').normalize('NFD').replace(/\p{M}/gu, '')
@@ -43,11 +52,22 @@ function preencherPreco(preco, anterior, produto) {
   anterior.textContent = anterior.hidden ? '' : reais(produto.anterior);
 }
 
+function preencherSaldo(rotulo, sku) {
+  rotulo.hidden = !estoque;
+  if (!estoque) return;
+  const saldo = consultarSaldo(sku);
+  rotulo.dataset.saldo = saldo > 0 ? 'disponivel' : saldo === 0 ? 'zerado' : 'conferir';
+  if (saldo === undefined) rotulo.textContent = 'Sem registro de estoque';
+  else if (saldo === null) rotulo.textContent = 'Estoque a conferir';
+  else rotulo.textContent = `Estoque ${quantidade.format(saldo)} un.`;
+}
+
 function abrirFicha(produto) {
   produtoAtual = produto;
   obter('ficha-tipo').textContent = `${produto.categoria} · ${produto.tipo}`;
   obter('ficha-nome').textContent = produto.nome;
   preencherPreco(obter('ficha-preco'), obter('ficha-anterior'), produto);
+  preencherSaldo(obter('ficha-estoque'), produto.sku);
 
   const dados = [
     ['Código', produto.sku],
@@ -88,6 +108,7 @@ function contextoDeVenda() {
     clima: usaPrevisao ? consultado.clima : climaVenda.value,
     tempo: usaPrevisao ? tempoConsultado : climaVenda.value && climaVenda.selectedOptions[0].textContent,
     edicao: obter('edicao').textContent,
+    saldo: consultarSaldo(produtoAtual.sku),
   };
 }
 
@@ -130,6 +151,7 @@ function criarProduto(produto) {
   cartao.querySelector('.produto-tipo').textContent = produto.tipo;
   cartao.querySelector('.produto-nome').textContent = produto.nome;
   preencherPreco(cartao.querySelector('.produto-preco'), cartao.querySelector('.produto-anterior'), produto);
+  preencherSaldo(cartao.querySelector('.saldo-estoque'), produto.sku);
   const botao = cartao.querySelector('.ver-produto');
   botao.setAttribute('aria-label', `Ver ficha de ${produto.nome}`);
   botao.addEventListener('click', () => abrirFicha(produto));
@@ -140,6 +162,7 @@ function filtrar() {
   const termos = normalizar(campo.value).split(' ').filter(Boolean);
   const filtrados = produtos.filter((produto) =>
     (!categoria.value || produto.categoria === categoria.value) &&
+    (!soDisponiveis.checked || consultarSaldo(produto.sku) > 0) &&
     termos.every((termo) => produto.busca.includes(termo)));
   if (!soMelhores) return filtrados;
 
@@ -155,9 +178,12 @@ function filtrar() {
 function exibir() {
   const itens = filtrar();
   const resumo = obter('resumo');
+  const semResultados = soDisponiveis.checked
+    ? 'Nenhum produto com saldo positivo corresponde à busca.'
+    : 'Nenhum produto encontrado. Tente outro nome ou categoria.';
   resumo.textContent = itens.length
     ? `${quantidade.format(itens.length)} ${itens.length === 1 ? 'produto' : 'produtos'} · ${soMelhores ? 'menor preço por tipo' : 'ordem de menor preço em cada categoria'}`
-    : 'Nenhum produto encontrado. Tente outro nome ou categoria.';
+    : semResultados;
   const grupos = new Map();
   for (const produto of itens) {
     if (!grupos.has(produto.categoria)) grupos.set(produto.categoria, []);
@@ -189,6 +215,52 @@ function exibir() {
     secoes.append(secao);
   }
   resultados.replaceChildren(secoes);
+}
+
+function exibirEstoque() {
+  const resumo = obter('estoque-resumo');
+  if (estoque) {
+    const comSaldo = produtos.filter(({ sku }) => Number.isFinite(consultarSaldo(sku))).length;
+    resumo.textContent = `${quantidade.format(comSaldo)} de ${quantidade.format(produtos.length)} produtos deste catálogo com saldo informado. Importado em ${dataImportacao.format(estoque.importadoEm)}.`;
+  } else {
+    resumo.textContent = 'Importe sua posição de estoque para ver o Total Disponível ao lado dos preços. Os dados ficam neste navegador.';
+    soDisponiveis.checked = false;
+  }
+  botaoImportar.textContent = estoque ? 'Atualizar planilha' : 'Importar planilha';
+  botaoRemover.hidden = obter('estoque-filtro').hidden = !estoque;
+  exibir();
+  if (ficha.open) {
+    preencherSaldo(obter('ficha-estoque'), produtoAtual.sku);
+    atualizarVenda();
+  }
+}
+
+function aplicarEstoque(novo) {
+  estoque = novo;
+  consultarSaldo = criarConsultaDeEstoque(novo);
+  exibirEstoque();
+}
+
+async function carregarEstoque() {
+  const arquivo = arquivoEstoque.files[0];
+  arquivoEstoque.value = '';
+  if (!arquivo) return;
+  botaoImportar.disabled = botaoRemover.disabled = true;
+  estadoEstoque.textContent = 'Lendo a planilha…';
+  try {
+    const novo = await importarPlanilha(arquivo);
+    aplicarEstoque(novo);
+    try {
+      localStorage.setItem(chaveEstoque, JSON.stringify(novo));
+      estadoEstoque.textContent = 'Estoque importado.';
+    } catch {
+      estadoEstoque.textContent = 'Estoque carregado nesta aba. O navegador impediu que fosse guardado.';
+    }
+  } catch (erro) {
+    estadoEstoque.textContent = erro.message;
+  } finally {
+    botaoImportar.disabled = botaoRemover.disabled = false;
+  }
 }
 
 async function iniciar() {
@@ -226,7 +298,7 @@ async function iniciar() {
     for (const nome of categorias) categoria.add(new Option(nome, nome));
     conteudo.hidden = false;
     mensagem.hidden = true;
-    exibir();
+    exibirEstoque();
   } catch {
     mensagem.textContent = 'O catálogo pesquisável está indisponível. A revista oficial está disponível no link acima.';
   }
@@ -234,6 +306,19 @@ async function iniciar() {
 
 campo.addEventListener('input', exibir);
 categoria.addEventListener('change', exibir);
+soDisponiveis.addEventListener('change', exibir);
+botaoImportar.addEventListener('click', () => arquivoEstoque.click());
+arquivoEstoque.addEventListener('change', carregarEstoque);
+botaoRemover.addEventListener('click', () => {
+  try {
+    localStorage.removeItem(chaveEstoque);
+  } catch {
+    // O estoque ainda pode ser removido da aba quando o armazenamento está desativado.
+  }
+  aplicarEstoque(null);
+  estadoEstoque.textContent = 'Estoque removido.';
+  botaoImportar.focus();
+});
 melhores.addEventListener('click', () => {
   soMelhores = !soMelhores;
   melhores.setAttribute('aria-pressed', String(soMelhores));
@@ -245,5 +330,6 @@ obter('copiar-mensagem').addEventListener('click', () => copiarTexto('mensagem-v
 obter('copiar-pedido').addEventListener('click', () => copiarTexto('pedido-ia', 'estado-pedido'));
 window.addEventListener('storage', (evento) => {
   if (ficha.open && evento.key === chaveClimaVenda) atualizarVenda();
+  if (evento.key === chaveEstoque || evento.key === null) aplicarEstoque(lerEstoque());
 });
 iniciar();

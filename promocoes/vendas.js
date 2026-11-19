@@ -1,4 +1,4 @@
-import { destaques } from './vendas-destaques.js?v=1';
+import { destaques } from './vendas-destaques.js?v=2';
 
 const dinheiro = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 export const reais = (valor) => dinheiro.format(valor);
@@ -81,6 +81,37 @@ const aberturasDeClima = {
   },
   umido: {
     cabelo: 'Se seus fios arrepiam em dias úmidos, tenho uma sugestão para a sua rotina.',
+  },
+};
+
+const abordagensRevenda = {
+  fragrancia: {
+    pergunta: 'Tem clientes procurando um perfume ou querendo testar uma fragrância nova?',
+    estrategia: 'Comece por clientes que já compraram fragrâncias parecidas. Mande uma foto com duas notas da ficha e uma ocasião de uso. Conte quantas pessoas pediram antes de definir o lote.',
+  },
+  splash: {
+    pergunta: 'Suas clientes costumam pedir uma perfumação mais leve para o pós-banho?',
+    estrategia: 'Mostre o tamanho do frasco e descreva o aroma nos Status. Sinalize o uso depois do banho e abra uma lista para medir quantas clientes querem o produto.',
+  },
+  refil: {
+    pergunta: 'Você tem clientes que já usam o produto e podem estar precisando repor?',
+    estrategia: 'Fale primeiro com quem já comprou a versão completa. Peça uma foto da embalagem para confirmar compatibilidade e junte os pedidos de reposição antes de comprar.',
+  },
+  kit: {
+    pergunta: 'Tem clientes que costumam comprar kits para presentear?',
+    estrategia: 'Mostre os itens e a apresentação do kit para as clientes que já buscam presente. Monte uma lista por faixa de preço e compre de acordo com as encomendas confirmadas.',
+  },
+  cabelo: {
+    pergunta: 'Qual necessidade de cabelo aparece mais nos pedidos das suas clientes?',
+    estrategia: 'Relacione a proposta da ficha às necessidades que suas clientes já comentaram. Ofereça o item na etapa certa da rotina e agrupe os pedidos por linha antes de comprar.',
+  },
+  cor: {
+    pergunta: 'Que tons ou acabamentos as suas clientes pedem com mais frequência?',
+    estrategia: 'Use referências dos tons que as clientes já compraram. Mande a imagem da cor e encomende cada variação com o tom confirmado para reduzir sobras.',
+  },
+  rotina: {
+    pergunta: 'Alguma cliente sua já pede um produto desse tipo?',
+    estrategia: 'Use o diferencial da ficha em uma oferta curta para as clientes certas. Teste a procura por encomenda ou com poucas unidades antes de aumentar o lote.',
   },
 };
 
@@ -200,7 +231,18 @@ export function prepararVenda(produto, contexto) {
   let pergunta = destaque?.pergunta || roteiro.pergunta;
   let estrategia = destaque?.estrategia || roteiro.estrategia;
   let fecho = roteiro.fecho;
-  if (contexto.objetivo === 'presente') {
+  if (contexto.objetivo === 'revender') {
+    const abordagem = destaque?.revenda ?? abordagensRevenda[tipo] ?? abordagensRevenda.rotina;
+    const semSaldo = Number.isFinite(contexto.saldo) && contexto.saldo <= 0;
+    const orientacao = semSaldo
+      ? 'A planilha indica saldo indisponível. Sinalize interesse e confirme reposição antes de aceitar pedidos.'
+      : 'Confirme saldo e condições de compra. Antes de definir seu preço, some custo, frete e taxas para calcular a margem.';
+    pergunta = abordagem.pergunta;
+    estrategia = `${abordagem.estrategia} ${orientacao}`;
+    fecho = semSaldo
+      ? 'Quer que eu confira a reposição ou uma opção parecida para suas clientes?'
+      : 'Quer que eu confira as condições de revenda para os pedidos que você tem em vista?';
+  } else if (contexto.objetivo === 'presente') {
     pergunta = 'Você está procurando um presente para qual ocasião?';
     estrategia = `Pergunte para quem é o presente e qual é a faixa de preço. ${estrategia}`;
     fecho = tipo === 'kit' ? roteiro.fecho : 'Quer que eu te mande uma imagem para você ver a apresentação?';
@@ -212,7 +254,7 @@ export function prepararVenda(produto, contexto) {
   }
 
   const aberturaDeClima = aberturasDeClima[contexto.clima];
-  const climaNaMensagem = gancho && aberturaDeClima?.[tipo];
+  const climaNaMensagem = gancho && contexto.objetivo !== 'revender' && aberturaDeClima?.[tipo];
   const proposta = contexto.objetivo === 'economizar' ? [preco, argumento] : [argumento, preco];
 
   return {
@@ -224,8 +266,11 @@ export function prepararVenda(produto, contexto) {
 }
 
 export function pedidoParaIA(produto, contexto, venda) {
+  const publico = contexto.objetivo === 'revender'
+    ? 'Atendo revendedoras e revendedores pelo WhatsApp. Escreva para quem está avaliando comprar para revender. Considere o perfil das clientes, o teste de demanda e os custos efetivos na decisão de compra.'
+    : 'Sou revendedor(a) e vendo pelo WhatsApp.';
   return [
-    'Sou revendedor(a) e vendo pelo WhatsApp. Escreva um argumento de venda em até 65 palavras, com uma pergunta final natural. Depois, dê uma resposta curta à objeção mais provável da pessoa.',
+    `${publico} Escreva um argumento de venda em até 65 palavras, com uma pergunta final natural. Depois, dê uma resposta curta à objeção mais provável da pessoa.`,
     'Use os dados abaixo como referência. Trate os preços como valores da revista e use o clima somente quando ajudar a explicar a escolha. Atenha-se aos fatos fornecidos para benefícios, condições de pagamento, estoque e entrega.',
     '',
     `Produto | ${produto.nome}`,

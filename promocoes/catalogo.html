@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f0ec">
   <title>Catálogo | Promoções</title>
   <link rel="icon" href="../icone.png" type="image/png">
-  <link rel="stylesheet" href="./promocoes.css?v=2">
-  <script src="./catalogo.js?v=2" type="module"></script>
+  <link rel="stylesheet" href="./promocoes.css?v=3">
+  <script src="./catalogo.js?v=3" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -31,6 +31,21 @@
     </div>
     <p id="mensagem" class="mensagem" role="status">Carregando catálogo…</p>
     <div id="conteudo" hidden>
+      <section class="estoque-painel" aria-labelledby="estoque-titulo">
+        <div>
+          <h2 id="estoque-titulo">Estoque disponível</h2>
+          <p id="estoque-resumo"></p>
+          <label class="estoque-filtro" id="estoque-filtro" hidden>
+            <input type="checkbox" id="so-disponiveis"> Somente com estoque
+          </label>
+        </div>
+        <div class="estoque-acoes">
+          <input type="file" id="arquivo-estoque" accept=".xlsx" hidden>
+          <button class="acao" id="importar-estoque" type="button">Importar planilha</button>
+          <button class="acao secundaria" id="remover-estoque" type="button" hidden>Remover estoque</button>
+        </div>
+        <p id="estoque-estado" role="status"></p>
+      </section>
       <div class="filtros">
         <div class="pesquisa">
           <label for="busca">Buscar produtos</label>
@@ -53,7 +68,7 @@
       <div class="produto-corpo">
         <p class="produto-tipo"></p>
         <h3 class="produto-nome"></h3>
-        <p class="produto-valores"><strong class="produto-preco"></strong><del class="produto-anterior" hidden></del></p>
+        <p class="produto-valores"><strong class="produto-preco"></strong><del class="produto-anterior" hidden></del><span class="saldo-estoque" hidden></span></p>
         <button type="button" class="acao secundaria ver-produto">Ver ficha</button>
       </div>
     </li>
@@ -65,7 +80,7 @@
       <form method="dialog"><button class="acao secundaria" type="submit" autofocus>Fechar</button></form>
     </div>
     <h2 id="ficha-nome"></h2>
-    <p class="produto-valores"><strong id="ficha-preco" class="produto-preco"></strong><del id="ficha-anterior" hidden></del></p>
+    <p class="produto-valores"><strong id="ficha-preco" class="produto-preco"></strong><del id="ficha-anterior" hidden></del><span id="ficha-estoque" class="saldo-estoque" hidden></span></p>
     <section class="ficha-diferencial" aria-labelledby="diferencial-titulo">
       <h3 id="diferencial-titulo">Por que vale oferecer</h3>
       <p id="ficha-diferencial"></p>
@@ -80,6 +95,7 @@
       <div class="contexto-venda">
         <label for="objetivo-venda">Perfil da compra
           <select id="objetivo-venda">
+            <option value="revender" selected>Revender</option>
             <option value="uso">Uso próprio</option>
             <option value="presente">Presente</option>
             <option value="economizar">Economizar</option>
