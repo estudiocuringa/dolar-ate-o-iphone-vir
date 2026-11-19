@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f0ec">
+  <title>Catálogo | Promoções</title>
+  <link rel="icon" href="../icone.png" type="image/png">
+  <link rel="stylesheet" href="./promocoes.css?v=1">
+  <script src="./catalogo.js?v=1" type="module"></script>
+</head>
+<body>
+  <header class="topo">
+    <nav class="limite navegacao" aria-label="Seções do site">
+      <a class="marca" href="../" aria-label="Dolar Hoje, início"><span aria-hidden="true">$</span></a>
+      <a href="../#cotacao">Cotação</a>
+      <a href="../#historico">Histórico</a>
+      <a href="../tempo/">Previsão do tempo</a>
+      <a href="./" aria-current="location">Promoções</a>
+    </nav>
+  </header>
+  <main class="limite catalogo">
+    <div class="catalogo-topo">
+      <div>
+        <a href="./" class="voltar">Todas as revistas</a>
+        <h1 id="titulo">Catálogo</h1>
+        <p id="edicao"></p>
+        <p id="observacao" hidden></p>
+      </div>
+      <a id="revista-oficial" class="acao secundaria" hidden target="_blank" rel="noopener noreferrer">Abrir revista oficial</a>
+    </div>
+    <p id="mensagem" class="mensagem" role="status">Carregando catálogo…</p>
+    <div id="conteudo" hidden>
+      <div class="filtros">
+        <div class="pesquisa">
+          <label for="busca">Buscar produtos</label>
+          <input type="search" id="busca" placeholder="Ex. Malbec, shampoo, batom" autocomplete="off">
+        </div>
+        <div class="filtro-categoria">
+          <label for="categoria">Categoria</label>
+          <select id="categoria"><option value="">Todas as categorias</option></select>
+        </div>
+        <button type="button" id="melhores" class="acao secundaria" aria-pressed="false">Menor preço por tipo</button>
+      </div>
+      <p id="resumo" class="resumo" role="status"></p>
+      <div id="resultados"></div>
+    </div>
+  </main>
+
+  <template id="molde-produto">
+    <li class="produto">
+      <img class="produto-imagem" loading="lazy" decoding="async" alt="">
+      <div class="produto-corpo">
+        <p class="produto-tipo"></p>
+        <h3 class="produto-nome"></h3>
+        <p class="produto-valores"><strong class="produto-preco"></strong><del class="produto-anterior" hidden></del></p>
+        <button type="button" class="acao secundaria ver-produto">Ver ficha</button>
+      </div>
+    </li>
+  </template>
+
+  <dialog id="ficha" aria-labelledby="ficha-nome">
+    <div class="ficha-cabecalho">
+      <p id="ficha-tipo" class="produto-tipo"></p>
+      <form method="dialog"><button class="acao secundaria" type="submit" autofocus>Fechar</button></form>
+    </div>
+    <h2 id="ficha-nome"></h2>
+    <p class="produto-valores"><strong id="ficha-preco" class="produto-preco"></strong><del id="ficha-anterior" hidden></del></p>
+    <dl class="especificacoes" id="ficha-detalhes"></dl>
+    <section class="sugestao" aria-labelledby="sugestao-titulo">
+      <h3 id="sugestao-titulo">Sugestão de venda</h3>
+      <p id="ficha-venda"></p>
+    </section>
+    <p class="origem"><a id="ficha-fonte" target="_blank" rel="noopener noreferrer">Ver página da revista</a></p>
+  </dialog>
+</body>
+</html>
