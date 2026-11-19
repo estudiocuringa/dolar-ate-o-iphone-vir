@@ -35,11 +35,25 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) { .animacoes { display: none; } }
 
 main { padding-block: 28px 27px; }
-.apresentacao { position: relative; isolation: isolate; overflow: hidden; min-height: 310px; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: center; border-radius: 29px; border: 1px solid #ff748666; background: radial-gradient(ellipse at 82% 38%, #f04953 0%, transparent 52%), linear-gradient(111deg, #8e142d 0%, #b31331 49%, #bd1f3d 100%); box-shadow: 0 17px 50px #18030c62, inset 0 1px 0 #ffffff20; margin-bottom: 19px; }
-.apresentacao-texto { z-index: 2; padding: 32px clamp(23px, 4.4vw, 56px) 36px; }
+.apresentacao { position: relative; isolation: isolate; overflow: hidden; min-height: 310px; display: grid; grid-template-columns: minmax(0, 28fr) minmax(0, 29fr) minmax(0, 43fr); align-items: center; border-radius: 29px; border: 1px solid #ff748666; background: radial-gradient(ellipse at 82% 38%, #f04953 0%, transparent 52%), linear-gradient(111deg, #8e142d 0%, #b31331 49%, #bd1f3d 100%); box-shadow: 0 17px 50px #18030c62, inset 0 1px 0 #ffffff20; margin-bottom: 19px; }
+.apresentacao-texto { z-index: 2; padding: 32px 0 36px clamp(23px, 4.4vw, 56px); }
 .apresentacao h1 { font-size: clamp(2.55rem, 6.85vw, 5.7rem); font-weight: 900; line-height: .98; letter-spacing: -.075em; color: #fff8eb; text-wrap: balance; }
 .apresentacao h1 span { display: block; color: var(--amarelo); }
 .apresentacao p { margin: .85rem 0 1.25rem; color: #fff4ef; line-height: 1.4; font-size: clamp(1rem, 1.6vw, 1.125rem); }
+.apresentacao-foto {
+  position: relative;
+  z-index: 2;
+  width: min(90%, 225px);
+  aspect-ratio: 1.05;
+  margin: 0;
+  overflow: hidden;
+  border: 2px solid #ffcc809e;
+  border-radius: 21px;
+  background: #651226;
+  box-shadow: 0 15px 25px #54071c85, 0 0 28px #ffb45e29;
+  transform: rotate(-4deg);
+}
+.apresentacao-foto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; }
 .atualizar { min-height: 46px; min-width: 158px; padding: .57rem .94rem; display: inline-flex; align-items: center; justify-content: center; font-size: .9375rem; font-weight: 800; color: #37111b; background: var(--amarelo); border-color: #ffed9c; box-shadow: 0 4px 10px #75122760; }
 .atualizar:hover { color: #37111b; background: #fff0a3; border-color: #fff0a3; }
 .atualizar:focus-visible { outline-color: #fff; }
@@ -147,7 +161,8 @@ main { padding-block: 28px 27px; }
   .historico { margin-top: 14px; }
   .apresentacao { grid-template-columns: minmax(0, 1.3fr) minmax(100px, .7fr); min-height: 268px; }
   .apresentacao h1 { font-size: clamp(2.4rem, 8.45vw, 3.94rem); }
-  .arte { min-height: 208px; }
+  .apresentacao-foto { grid-column: 1 / -1; grid-row: 2; justify-self: center; width: min(56%, 205px); margin-bottom: 24px; }
+  .arte { grid-column: 2; grid-row: 1; min-height: 208px; }
   .celular { border-radius: 21px; padding: 4px; }
   .tela { border-radius: 13px; }
   .moeda { width: 35px; font-size: .94rem; }
@@ -164,7 +179,7 @@ main { padding-block: 28px 27px; }
   .apresentacao-texto { padding: 23px 16px; }
   .apresentacao h1 { font-size: clamp(2.27rem, 9vw, 3rem); text-wrap: initial; }
   .apresentacao p { max-width: 13rem; }
-  .arte { position: absolute; width: 30%; min-height: 0; right: 2.5%; top: 13%; bottom: 15%; }
+  .arte { position: absolute; grid-column: auto; grid-row: auto; width: 30%; min-height: 0; height: clamp(160px, 45vw, 206px); right: 2.5%; top: 1rem; }
   .celular { width: clamp(66px, 17vw, 91px); border-radius: 17px; border-width: 3px; padding: 3px; }
   .tela { border-radius: 10px; }
   .moeda { width: 27px; font-size: .77rem; }
