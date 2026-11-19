@@ -54,7 +54,10 @@ main { padding-block: 28px 27px; }
 .celular { position: relative; width: clamp(99px, 13vw, 151px); aspect-ratio: .51; border: 4px solid #fac3a3; padding: 5px; border-radius: 28px; background: #230913; box-shadow: inset 0 0 0 1px #fca08c, 7px 7px 0 #853139, 13px 19px 30px #63061f95; transform: rotate(13deg); animation: flutuar 4.5s ease-in-out infinite; }
 .tela { height: 100%; display: grid; place-items: center; position: relative; overflow: hidden; border-radius: 18px; background: repeating-radial-gradient(ellipse at 18% 20%, transparent 0 15px, #ffb67936 16px, transparent 17px 20px), radial-gradient(ellipse at 25% 30%, #f88060, #ad1743 59%, #510a25); }
 .tela::before { content: ""; position: absolute; inset: 8px 38% auto; height: 6px; border-radius: 5px; background: #2e0b19; }
-.tela span { font-size: clamp(3rem, 7.5vw, 6rem); line-height: 1; font-weight: 900; color: #ffe27b; text-shadow: 0 0 30px #ffc63a78; }
+.estrela-celular { display: grid; place-items: center; font-size: clamp(3rem, 7.5vw, 6rem); line-height: 1; font-weight: 900; color: #ffe27b; }
+.estrela-celular > * { grid-area: 1 / 1; }
+.estrela-celular span { text-shadow: 0 0 30px #ffc63a78; }
+.estrela-celular strong { font-size: .28em; font-weight: inherit; color: #711429; transform: translateY(.12em); }
 .moeda { position: absolute; display: grid; place-items: center; width: 47px; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(135deg, #fff0a7, #ffc853 60%, #f6a83c); border: 2px solid #ffe7a2; box-shadow: inset 0 0 0 3px #dc8d303e, 4px 6px 0 #ab5528, 0 10px 19px #750e3499; color: #762829; font-size: 1.15rem; font-weight: 900; }
 .moeda-usd { left: 13%; top: 29%; transform: rotate(-15deg); }
 .moeda-brl { right: 13%; bottom: 24%; transform: rotate(17deg); }
@@ -168,7 +171,7 @@ main { padding-block: 28px 27px; }
   .arte { position: absolute; width: 30%; min-height: 0; right: 2.5%; top: 13%; bottom: 15%; }
   .celular { width: clamp(66px, 17vw, 91px); border-radius: 17px; border-width: 3px; padding: 3px; }
   .tela { border-radius: 10px; }
-  .tela span { font-size: 2.45rem; }
+  .estrela-celular { font-size: 2.45rem; }
   .moeda { width: 27px; font-size: .77rem; }
   .moeda-usd { left: -4%; top: 21%; }
   .moeda-brl { right: 0; bottom: 13%; }
