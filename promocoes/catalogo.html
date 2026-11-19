@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f0ec">
   <title>Catálogo | Promoções</title>
   <link rel="icon" href="../icone.png" type="image/png">
-  <link rel="stylesheet" href="./promocoes.css?v=5">
-  <script src="./catalogo.js?v=4" type="module"></script>
+  <link rel="stylesheet" href="./promocoes.css?v=6">
+  <script src="./catalogo.js?v=5" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -59,9 +59,14 @@
             <option value="">Todos</option>
             <option value="feminino">Feminino</option>
             <option value="masculino">Masculino</option>
+            <option value="geral">Uso geral</option>
+            <option value="infantil">Infantil</option>
           </select>
         </div>
         <button type="button" id="melhores" class="acao secundaria" aria-pressed="false">Menor preço por tipo</button>
+        <label class="filtro-uso-geral" id="opcao-uso-geral" hidden>
+          <input type="checkbox" id="incluir-uso-geral" checked> Incluir produtos de uso geral
+        </label>
       </div>
       <p id="resumo" class="resumo" role="status"></p>
       <div id="resultados"></div>
@@ -72,7 +77,7 @@
     <li class="produto">
       <img class="produto-imagem" loading="lazy" decoding="async" alt="">
       <div class="produto-corpo">
-        <p class="produto-tipo"></p>
+        <p class="produto-classificacao"><span class="produto-tipo"></span><span class="produto-publico" hidden></span></p>
         <h3 class="produto-nome"></h3>
         <p class="produto-valores"><strong class="produto-preco"></strong><del class="produto-anterior" hidden></del><span class="saldo-estoque" hidden></span></p>
         <button type="button" class="acao secundaria ver-produto">Ver ficha</button>

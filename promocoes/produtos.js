@@ -3,7 +3,15 @@ export const marcas = {
   eudora: { nome: 'Eudora', revista: 'https://catalogo.eudora.com.br/REVISTA' },
 };
 
-const publicos = { feminino: 'Feminino', masculino: 'Masculino', unissex: 'Unissex' };
+export const nomesPublicos = { feminino: 'Feminino', masculino: 'Masculino', geral: 'Uso geral', infantil: 'Infantil' };
+
+export function publicoEspecifico(publico) {
+  return publico === 'feminino' || publico === 'masculino';
+}
+
+export function correspondeAoPublico(publico, filtro, incluirUsoGeral) {
+  return !filtro || publico === filtro || (incluirUsoGeral && publicoEspecifico(filtro) && publico === 'geral');
+}
 
 export function normalizar(texto) {
   return String(texto ?? '').normalize('NFD').replace(/\p{M}/gu, '')
@@ -11,7 +19,7 @@ export function normalizar(texto) {
 }
 
 export async function lerCatalogo(marca) {
-  const resposta = await fetch(new URL(`./dados/${marca}.json?v=2`, import.meta.url));
+  const resposta = await fetch(new URL(`./dados/${marca}.json?v=3`, import.meta.url));
   if (!resposta.ok) throw new Error('Catálogo indisponível.');
   return resposta.json();
 }
@@ -20,7 +28,7 @@ export function dadosDaFicha(produto) {
   return [
     ['Código', produto.sku],
     ['Linha', produto.linha],
-    ['Público indicado na revista', publicos[produto.publico]],
+    ['Público', nomesPublicos[produto.publico]],
     ['Apresentação', produto.volume],
     ['Aromas e família olfativa', produto.aromas],
     ['Indicado para', produto.indicacao],

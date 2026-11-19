@@ -1,6 +1,6 @@
 import { chaveEstoque, criarConsultaDeEstoque, lerEstoque } from './estoque.js?v=1';
-import { copiarTexto, dadosDaFicha, lerCatalogo, marcas } from './produtos.js?v=1';
-import { interpretarPedido, montarAbordagem, nomesIndicadores, recomendarPedido } from './recomendacao.js?v=1';
+import { copiarTexto, dadosDaFicha, lerCatalogo, marcas } from './produtos.js?v=2';
+import { interpretarPedido, montarAbordagem, nomesIndicadores, recomendarPedido } from './recomendacao.js?v=2';
 import { reais } from './vendas.js?v=3';
 
 const obter = id => document.getElementById(id);

@@ -1,4 +1,4 @@
-import { marcas, normalizar } from './produtos.js?v=1';
+import { marcas, normalizar, publicoEspecifico } from './produtos.js?v=2';
 import { prepararVenda, reais } from './vendas.js?v=3';
 
 export const nomesIndicadores = { multimarca: 'Multimarca', cabelo: 'Cabelo', maquiagem: 'Maquiagem' };
@@ -88,7 +88,7 @@ function complementar(produto, itens) {
 
 function afinidade(produto, pedido, complemento, alvoMultimarca, marcaBase) {
   if (complemento) return 3;
-  if (produto.publico && pedido.itens.some(item => item.categoria === produto.categoria && item.publico === produto.publico)) return 2;
+  if (publicoEspecifico(produto.publico) && pedido.itens.some(item => item.categoria === produto.categoria && item.publico === produto.publico)) return 2;
   if (!alvoMultimarca && marcaBase && produto.marca === marcaBase) return 1;
   return 0;
 }

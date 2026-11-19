@@ -1,12 +1,13 @@
 import { chaveClimaVenda, lerClimaVenda } from '../tempo/clima-venda.js?v=1';
 import { chaveEstoque, criarConsultaDeEstoque, importarPlanilha, lerEstoque } from './estoque.js?v=1';
-import { copiarTexto, dadosDaFicha, lerCatalogo, marcas, normalizar } from './produtos.js?v=1';
+import { copiarTexto, correspondeAoPublico, dadosDaFicha, lerCatalogo, marcas, nomesPublicos, normalizar, publicoEspecifico } from './produtos.js?v=2';
 import { pedidoParaIA, prepararVenda, reais } from './vendas.js?v=3';
 
 const obter = (id) => document.getElementById(id);
 const campo = obter('busca');
 const categoria = obter('categoria');
 const publico = obter('publico');
+const incluirUsoGeral = obter('incluir-uso-geral');
 const melhores = obter('melhores');
 const conteudo = obter('conteudo');
 const mensagem = obter('mensagem');
@@ -119,6 +120,9 @@ function criarProduto(produto) {
     imagem.hidden = true;
   }
   cartao.querySelector('.produto-tipo').textContent = produto.tipo;
+  const rotuloPublico = cartao.querySelector('.produto-publico');
+  rotuloPublico.hidden = !produto.publico;
+  rotuloPublico.textContent = nomesPublicos[produto.publico] ?? '';
   cartao.querySelector('.produto-nome').textContent = produto.nome;
   preencherPreco(cartao.querySelector('.produto-preco'), cartao.querySelector('.produto-anterior'), produto);
   preencherSaldo(cartao.querySelector('.saldo-estoque'), produto.sku);
@@ -128,18 +132,22 @@ function criarProduto(produto) {
   return cartao;
 }
 
-function filtrar() {
+function tituloDoGrupo(categoria, publicoDoProduto, separarPublicos) {
+  return separarPublicos ? `${categoria} · ${nomesPublicos[publicoDoProduto]}` : categoria;
+}
+
+function filtrar(separarPublicos) {
   const termos = normalizar(campo.value).split(' ').filter(Boolean);
   const filtrados = produtos.filter((produto) =>
     (!categoria.value || produto.categoria === categoria.value) &&
-    (!publico.value || produto.publico === publico.value) &&
+    correspondeAoPublico(produto.publico, publico.value, incluirUsoGeral.checked) &&
     (!soDisponiveis.checked || consultarSaldo(produto.sku) > 0) &&
     termos.every((termo) => produto.busca.includes(termo)));
   if (!soMelhores) return filtrados;
 
   const porTipo = new Set();
   return filtrados.filter((produto) => {
-    const chave = produto.categoria + '/' + produto.tipo;
+    const chave = tituloDoGrupo(produto.categoria, produto.publico, separarPublicos) + '/' + produto.tipo;
     if (porTipo.has(chave)) return false;
     porTipo.add(chave);
     return true;
@@ -147,23 +155,34 @@ function filtrar() {
 }
 
 function exibir() {
-  const itens = filtrar();
+  const temPublicoEspecifico = publicoEspecifico(publico.value);
+  const separarPublicos = temPublicoEspecifico && incluirUsoGeral.checked;
+  obter('opcao-uso-geral').hidden = !temPublicoEspecifico;
+  const itens = filtrar(separarPublicos);
   const resumo = obter('resumo');
-  const semResultados = soDisponiveis.checked
+  let semResultados = soDisponiveis.checked
     ? 'Nenhum produto com saldo positivo corresponde à busca.'
     : 'Nenhum produto encontrado. Tente outro nome ou ajuste os filtros.';
+  if (temPublicoEspecifico && !incluirUsoGeral.checked) semResultados += ' Marque Incluir produtos de uso geral para ampliar a busca.';
+  const ordemDaLista = soMelhores
+    ? `menor preço por tipo${separarPublicos ? ' em cada grupo' : ''}`
+    : `ordem de menor preço em cada ${separarPublicos ? 'grupo' : 'categoria'}`;
   resumo.textContent = itens.length
-    ? `${quantidade.format(itens.length)} ${itens.length === 1 ? 'produto' : 'produtos'} · ${soMelhores ? 'menor preço por tipo' : 'ordem de menor preço em cada categoria'}`
+    ? `${quantidade.format(itens.length)} ${itens.length === 1 ? 'produto' : 'produtos'} · ${ordemDaLista}`
     : semResultados;
   const grupos = new Map();
   for (const produto of itens) {
-    if (!grupos.has(produto.categoria)) grupos.set(produto.categoria, []);
-    grupos.get(produto.categoria).push(produto);
+    const titulo = tituloDoGrupo(produto.categoria, produto.publico, separarPublicos);
+    if (!grupos.has(titulo)) grupos.set(titulo, []);
+    grupos.get(titulo).push(produto);
   }
 
   const secoes = document.createDocumentFragment();
-  const categorias = [...new Set([...principais, ...[...grupos.keys()].sort(ordem.compare)])];
-  for (const nome of categorias) {
+  const outrasCategorias = [...new Set(itens.map(produto => produto.categoria))].sort(ordem.compare);
+  const categorias = [...new Set([...principais, ...outrasCategorias])];
+  const publicos = separarPublicos ? [publico.value, 'geral'] : [publico.value];
+  const titulos = categorias.flatMap(categoria => publicos.map(publico => tituloDoGrupo(categoria, publico, separarPublicos)));
+  for (const nome of titulos) {
     const lista = grupos.get(nome);
     if (!lista) continue;
     const secao = elemento('section', '', 'grupo');
@@ -257,7 +276,7 @@ async function iniciar() {
     observacao.hidden = !catalogo.observacao;
     produtos = catalogo.produtos.map((produto) => ({
       ...produto,
-      busca: normalizar([produto.nome, produto.sku, produto.linha, produto.categoria, produto.tipo, produto.aromas].join(' ')),
+      busca: normalizar([produto.nome, produto.sku, produto.linha, produto.categoria, produto.tipo, produto.aromas, nomesPublicos[produto.publico]].join(' ')),
     })).sort((a, b) => a.preco - b.preco || ordem.compare(a.nome, b.nome));
 
     if (!produtos.length) {
@@ -280,6 +299,7 @@ async function iniciar() {
 campo.addEventListener('input', exibir);
 categoria.addEventListener('change', exibir);
 publico.addEventListener('change', exibir);
+incluirUsoGeral.addEventListener('change', exibir);
 soDisponiveis.addEventListener('change', exibir);
 botaoImportar.addEventListener('click', () => arquivoEstoque.click());
 arquivoEstoque.addEventListener('change', carregarEstoque);
