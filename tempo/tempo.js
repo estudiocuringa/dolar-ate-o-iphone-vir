@@ -1,5 +1,5 @@
 import { salvarClimaVenda } from './clima-venda.js?v=1';
-import { criarHorario } from './horario.js?v=1';
+import { criarHorario } from './horario.js?v=2';
 
 const obter = (id) => document.getElementById(id);
 const formCidade = obter('form-cidade');

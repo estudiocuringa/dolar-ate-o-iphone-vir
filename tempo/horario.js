@@ -131,8 +131,8 @@ export function criarHorario(descreverTempo, medida) {
 
   function deslocar(direcao) {
     const passo = Math.max(rolagem.clientWidth - 110, 110);
-    const comportamento = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-    rolagem.scrollBy({ left: passo * direcao, behavior: comportamento });
+    rolagem.scrollBy({ left: passo * direcao, behavior: 'instant' });
+    atualizarSetas();
   }
 
   anterior.addEventListener('click', () => deslocar(-1));
