@@ -1,4 +1,5 @@
 import { salvarClimaVenda } from './clima-venda.js?v=1';
+import { criarHorario } from './horario.js?v=1';
 
 const obter = (id) => document.getElementById(id);
 const formCidade = obter('form-cidade');
@@ -15,9 +16,11 @@ const moldeDia = obter('molde-dia');
 const buscaTempo = obter('busca-tempo');
 const cenaLegenda = obter('cena-legenda');
 const pausarCena = obter('pausar-cena');
+const horario = criarHorario(dadosDoTempo, medida);
 
 const INTERVALO = 15 * 60_000;
-const MUNICIPIO_INICIAL = { id: 3550308, nome: 'São Paulo', uf: 'SP', lat: -23.5548, lon: -46.579 };
+const MUNICIPIO_INICIAL = { id: 3169901, nome: 'Ubá', uf: 'MG', lat: -21.1201, lon: -42.9425 };
+const CHAVE_MUNICIPIO = 'tempo-municipio-preferido';
 const ESTADOS = {
   AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará',
   DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso',
@@ -75,6 +78,14 @@ function normalizar(texto) {
 
 function nomeCompleto({ nome, uf }) {
   return `${nome}, ${uf}`;
+}
+
+function lerMunicipioPreferido() {
+  try {
+    return Number(localStorage.getItem(CHAVE_MUNICIPIO));
+  } catch {
+    return 0;
+  }
 }
 
 async function lerJson(url, opcao) {
@@ -158,7 +169,11 @@ async function pesquisar(enviar = false) {
 
 function selecionar(municipio) {
   fecharSugestoes();
-  consulta.value = nomeCompleto(municipio);
+  try {
+    localStorage.setItem(CHAVE_MUNICIPIO, String(municipio.id));
+  } catch {
+    // A cidade escolhida permanece disponível no endereço da página.
+  }
   const url = new URL(window.location.href);
   url.searchParams.set('cidade', municipio.id);
   window.history.replaceState(null, '', url);
@@ -168,7 +183,10 @@ function selecionar(municipio) {
 
 function abrirPrevisao(municipio) {
   municipioSelecionado = municipio;
-  obter('municipio').textContent = nomeCompleto(municipio);
+  const nome = nomeCompleto(municipio);
+  consulta.value = nome;
+  obter('municipio').textContent = nome;
+  horario.ocultar(nome);
   condicoes.hidden = semana.hidden = dataAtual.hidden = true;
   atualizarCena();
   cidades.replaceChildren();
@@ -176,9 +194,12 @@ function abrirPrevisao(municipio) {
 }
 
 function dadosDoTempo(codigo, noite = false) {
-  if (noite && codigo === 0) return ['🌙', 'Céu limpo'];
-  if (noite && codigo === 1) return ['🌙', 'Poucas nuvens'];
-  return TEMPO[codigo] ?? ['🌡️', 'Condição indisponível'];
+  const dados = TEMPO[codigo] ?? ['🌡️', 'Condição indisponível'];
+  if (!noite) return dados;
+  if (codigo === 0 || codigo === 1) return ['🌙', ...dados.slice(1)];
+  if (codigo === 2) return ['☁️', ...dados.slice(1)];
+  if (codigo === 51 || codigo === 61 || codigo === 80) return ['🌧️', ...dados.slice(1)];
+  return dados;
 }
 
 function atualizarCena(codigo) {
@@ -242,14 +263,26 @@ async function consultar() {
   estado.textContent = condicoes.hidden ? 'Consultando a previsão…' : 'Atualizando a previsão…';
 
   const { lat, lon } = municipioSelecionado;
-  const parametros = new URLSearchParams({
+  const coordenadas = {
     latitude: lat,
     longitude: lon,
     timezone: 'auto',
     forecast_days: 7,
+  };
+  const parametros = new URLSearchParams({
+    ...coordenadas,
     current: 'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+    hourly: 'temperature_2m,precipitation_probability,weather_code,is_day',
   });
+  const parametrosGoogle = new URLSearchParams({
+    ...coordenadas,
+    hourly: 'temperature_2m',
+    models: 'google_weathernext2_ensemble_mean',
+  });
+  const modeloGoogle = lerJson(`https://ensemble-api.open-meteo.com/v1/ensemble?${parametrosGoogle}`, {
+    signal: AbortSignal.any([pedido.signal, AbortSignal.timeout(4_500)]),
+  }).catch(() => null);
   try {
     const previsao = await lerJson(`https://api.open-meteo.com/v1/forecast?${parametros}`, {
       signal: pedido.signal, cache: 'no-cache',
@@ -259,11 +292,14 @@ async function consultar() {
       throw new Error('Previsão incompleta.');
     }
     exibirPrevisao(previsao);
-    if (Number(new URLSearchParams(window.location.search).get('cidade')) === municipioSelecionado.id) {
+    const cidadeDaUrl = Number(new URLSearchParams(window.location.search).get('cidade'));
+    if ([cidadeDaUrl, lerMunicipioPreferido()].includes(municipioSelecionado.id)) {
       const [, descricao, cena] = dadosDoTempo(previsao.current.weather_code);
       salvarClimaVenda(nomeCompleto(municipioSelecionado), previsao.current, cena, descricao);
     }
     estado.hidden = true;
+    const temperaturasGoogle = await modeloGoogle;
+    if (requisicao === pedido) horario.atualizar(previsao, temperaturasGoogle);
   } catch {
     if (requisicao !== pedido) return;
     estado.textContent = condicoes.hidden
@@ -271,6 +307,7 @@ async function consultar() {
       : 'Falha ao atualizar. Os dados da última consulta continuam abaixo.';
   } finally {
     clearTimeout(timeout);
+    pedido.abort();
     if (requisicao === pedido) {
       requisicao = undefined;
       botaoAtualizar.removeAttribute('aria-disabled');
@@ -280,17 +317,19 @@ async function consultar() {
 
 async function iniciar() {
   let municipio = MUNICIPIO_INICIAL;
-  const id = Number(new URLSearchParams(window.location.search).get('cidade'));
+  const preferido = lerMunicipioPreferido();
+  const id = Number(new URLSearchParams(window.location.search).get('cidade')) || preferido;
   if (id && id !== MUNICIPIO_INICIAL.id) {
     try {
       const municipios = await obterCatalogo();
       if (municipioSelecionado) return;
-      municipio = municipios.find((opcao) => opcao.id === id) ?? municipio;
+      municipio = municipios.find((opcao) => opcao.id === id)
+        ?? municipios.find((opcao) => opcao.id === preferido)
+        ?? municipio;
     } catch {
       if (municipioSelecionado) return;
     }
   }
-  if (municipio.id === id) consulta.value = nomeCompleto(municipio);
   abrirPrevisao(municipio);
 }
 

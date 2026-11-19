@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Consulte as condições atuais e a previsão de sete dias para cidades de todo o Brasil.">
+  <meta name="description" content="Consulte as condições atuais, a previsão por hora e os próximos sete dias para cidades de todo o Brasil.">
   <meta name="theme-color" content="#eaf6ff">
   <title>Previsão do tempo | Dolar até o Iphone vir</title>
   <link rel="icon" href="../icone.png" type="image/png">
-  <link rel="stylesheet" href="./tempo.css?v=3">
-  <script src="./tempo.js?v=3" type="module"></script>
+  <link rel="stylesheet" href="./tempo.css?v=4">
+  <script src="./tempo.js?v=4" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -23,12 +23,12 @@
     <section id="busca-tempo" class="busca" data-cena="neutro" aria-labelledby="titulo">
       <div class="busca-conteudo">
         <h1 id="titulo">Previsão do tempo</h1>
-        <p>Veja como está o tempo e o que esperar nos próximos sete dias.</p>
+        <p>Veja como está o tempo, hora por hora, e planeje os próximos sete dias.</p>
 
         <form id="form-cidade" class="form-cidade" role="search" aria-label="Consultar por cidade">
           <label for="consulta">Sua cidade</label>
           <div class="entrada">
-            <input type="search" id="consulta" name="consulta" placeholder="Ex.: São Paulo, SP" autocomplete="off" maxlength="80" required minlength="2" aria-controls="sugestoes">
+            <input type="search" id="consulta" name="consulta" placeholder="Ex.: Ubá, MG" autocomplete="off" maxlength="80" required minlength="2" aria-controls="sugestoes">
             <button type="submit" class="acao">Buscar</button>
           </div>
           <div id="sugestoes" class="sugestoes" hidden>
@@ -64,7 +64,7 @@
     <section class="agora" aria-labelledby="municipio">
       <div class="separador">
         <div>
-          <h2 id="municipio" tabindex="-1">São Paulo, SP</h2>
+          <h2 id="municipio" tabindex="-1">Ubá, MG</h2>
           <p id="data-atual" class="secundario" hidden></p>
         </div>
         <button id="atualizar" type="button" class="botao">Atualizar previsão</button>
@@ -85,6 +85,44 @@
           <div><dt>Vento</dt><dd id="vento">—</dd></div>
         </dl>
       </div>
+    </section>
+
+    <section id="horario" class="horario" aria-labelledby="titulo-horario" hidden>
+      <div class="separador">
+        <div>
+          <h2 id="titulo-horario">Previsão por hora</h2>
+          <p class="secundario">Temperatura, condições e chance de chuva no horário local.</p>
+        </div>
+        <div id="controle-horario" class="controle-horario" hidden>
+          <label for="periodo-horario" class="sr-only">Período da previsão por hora</label>
+          <select id="periodo-horario"></select>
+          <div class="setas-horarias">
+            <button type="button" id="horas-anteriores" class="botao" aria-label="Horas anteriores" aria-controls="rolagem-horaria">‹</button>
+            <button type="button" id="horas-seguintes" class="botao" aria-label="Próximas horas" aria-controls="rolagem-horaria">›</button>
+          </div>
+        </div>
+      </div>
+      <p id="estado-horario" class="mensagem secundario" role="status" hidden>Previsão por hora indisponível no momento.</p>
+      <div id="rolagem-horaria" class="rolagem-horaria" role="region" aria-label="Horários da previsão" tabindex="0" hidden>
+        <div class="trilha-horaria">
+          <canvas id="curva-horaria" class="curva-horaria" aria-hidden="true"></canvas>
+          <ol id="horas" class="horas"></ol>
+        </div>
+      </div>
+      <div class="fontes-horarias">
+        <p id="fonte-google-horaria" class="secundario" hidden>Temperaturas do <a href="https://developers.google.com/weathernext/guides/models-wn2?hl=pt-br" target="_blank" rel="noopener noreferrer">Google WeatherNext 2</a>, estimadas para cada hora pelo Open-Meteo. Condições e chance de chuva do Open-Meteo.</p>
+        <p id="fonte-open-meteo-horaria" class="secundario" hidden>Dados horários do <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo</a>.</p>
+        <a id="comparar-google" class="comparar-google" target="_blank" rel="noopener noreferrer">Comparar no Google</a>
+      </div>
+      <template id="molde-hora">
+        <li class="hora">
+          <time><span class="hora-data"></span><span class="hora-relogio"></span></time>
+          <span class="hora-icone" aria-hidden="true"></span>
+          <p class="hora-temperatura"></p>
+          <p class="hora-condicao"></p>
+          <p class="hora-chuva"></p>
+        </li>
+      </template>
     </section>
 
     <section id="semana" class="semana" aria-labelledby="titulo-semana" hidden>
@@ -109,7 +147,7 @@
 
     <noscript><p class="mensagem">Ative o JavaScript para consultar a previsão.</p></noscript>
     <footer class="rodape">
-      <p>Previsão por modelos meteorológicos. <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></p>
+      <p>Condições atuais e previsão de 7 dias do <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></p>
       <p>Localidades do <a href="https://www.ibge.gov.br/geociencias/organizacao-do-territorio/estrutura-territorial/27385-localidades.html" target="_blank" rel="noopener noreferrer">IBGE</a></p>
     </footer>
   </main>
