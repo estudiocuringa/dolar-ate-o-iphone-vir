@@ -7,7 +7,8 @@
   <meta name="description" content="Explore as revistas de O Boticário e Eudora, encontre ofertas e abra as fichas de venda.">
   <title>Promoções | Estúdio Curinga</title>
   <link rel="icon" href="../icone.png" type="image/png">
-  <link rel="stylesheet" href="./promocoes.css?v=1">
+  <link rel="stylesheet" href="./promocoes.css?v=4">
+  <script src="./sugestao.js?v=1" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -24,6 +25,7 @@
       <div class="abertura-texto">
         <h1 id="titulo">Promoções de beleza</h1>
         <p>Escolha uma revista, encontre os menores preços e abra a ficha do produto para preparar sua venda.</p>
+        <a class="atalho-sugestao" href="#sugestao-de-produto">Sugerir produto para um pedido <span aria-hidden="true">↓</span></a>
       </div>
     </section>
 
@@ -46,6 +48,86 @@
         </div>
       </article>
     </div>
+
+    <section id="sugestao-de-produto" class="sugestao-pedido" aria-labelledby="titulo-sugestao-pedido">
+      <header class="sugestao-capa">
+        <h2 id="titulo-sugestao-pedido">Sugestão de produto</h2>
+        <p>Cole o pedido e marque os indicadores que faltam. Receba uma oferta para apresentar à revendedora, com preço, diferencial e mensagem para WhatsApp.</p>
+      </header>
+      <div class="sugestao-oficina">
+        <form id="pedido-form" class="pedido-form">
+          <label for="pedido-itens">Itens do pedido</label>
+          <p class="pedido-ajuda" id="pedido-ajuda">Cole um código ou nome por linha. Pode incluir a quantidade.</p>
+          <textarea id="pedido-itens" rows="5" required maxlength="10000" aria-describedby="pedido-ajuda" placeholder="84387 — Malbec original&#10;2x 55104"></textarea>
+
+          <fieldset class="pedido-indicadores">
+            <legend>Indicadores pendentes</legend>
+            <div class="pedido-opcoes">
+              <label><input type="checkbox" name="indicador" value="multimarca"> Multimarca</label>
+              <label><input type="checkbox" name="indicador" value="cabelo"> Cabelo</label>
+              <label><input type="checkbox" name="indicador" value="maquiagem"> Maquiagem</label>
+            </div>
+          </fieldset>
+          <div class="pedido-complementos">
+            <label for="pedido-marca">Marca no pedido
+              <select id="pedido-marca">
+                <option value="">Identificar pelo pedido</option>
+                <option value="boticario">O Boticário</option>
+                <option value="eudora">Eudora</option>
+              </select>
+            </label>
+            <label for="pedido-limite">Limite por item (R$)
+              <input id="pedido-limite" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Opcional">
+            </label>
+          </div>
+          <p class="pedido-ajuda">Multimarca busca um produto na outra revista.</p>
+          <div class="pedido-estoque"><span id="pedido-estoque"></span> <a href="./catalogo.html?marca=boticario#estoque-titulo" target="_blank" rel="noopener">Gerenciar estoque</a></div>
+          <button class="acao pedido-enviar" type="submit">Encontrar melhor sugestão</button>
+          <p id="pedido-estado" class="pedido-ajuda" role="status"></p>
+        </form>
+        <div class="pedido-resultados" aria-labelledby="pedido-resultado-titulo">
+          <h3 id="pedido-resultado-titulo" tabindex="-1">Melhor sugestão para o pedido</h3>
+          <div id="pedido-recados" class="pedido-recados"></div>
+          <p id="pedido-introducao">Informe os itens e os indicadores pendentes para ver o que encaixa no pedido.</p>
+          <div id="pedido-resultados"></div>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <template id="molde-recomendacao">
+    <article class="rec-produto">
+      <div class="rec-indicadores"></div>
+      <div class="rec-produto-topo">
+        <img class="rec-imagem" decoding="async" loading="lazy" alt="" hidden>
+        <div class="rec-identidade">
+          <p class="rec-marca"></p>
+          <h4 class="rec-nome"></h4>
+          <p class="rec-valores"><strong class="rec-preco"></strong><del class="rec-anterior" hidden></del></p>
+          <p class="rec-saldo"></p>
+        </div>
+      </div>
+      <div class="rec-textos">
+        <div><h5>Por que encaixa no pedido</h5><p class="rec-motivos"></p></div>
+        <div><h5>Diferencial do produto</h5><p class="rec-diferencial"></p></div>
+      </div>
+      <details class="ficha-secao">
+        <summary>Descrição e modo de uso</summary>
+        <dl class="especificacoes rec-especificacoes"></dl>
+        <p class="origem"><a class="rec-ficha" target="_blank" rel="noopener">Ver ficha completa no catálogo</a></p>
+      </details>
+      <div class="rec-mensagem">
+        <label class="rec-rotulo">O que falar para a revendedora</label>
+        <textarea class="rec-texto" rows="5" readonly></textarea>
+        <div class="acoes-venda"><button class="acao rec-copiar" type="button">Copiar mensagem</button><span class="estado-copia rec-copia-estado" role="status"></span></div>
+      </div>
+      <details class="ficha-secao rec-estrategia">
+        <summary>Como conduzir e responder à objeção</summary>
+        <p class="rec-roteiro"></p>
+        <p class="rec-limite-titulo">Se ela quiser manter o pedido pequeno</p>
+        <p class="rec-objecao"></p>
+      </details>
+    </article>
+  </template>
 </body>
 </html>

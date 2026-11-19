@@ -1,15 +1,12 @@
 import { chaveClimaVenda, lerClimaVenda } from '../tempo/clima-venda.js?v=1';
 import { chaveEstoque, criarConsultaDeEstoque, importarPlanilha, lerEstoque } from './estoque.js?v=1';
-import { pedidoParaIA, prepararVenda, reais } from './vendas.js?v=2';
-
-const marcas = {
-  boticario: { nome: 'O Boticário', revista: 'https://catalogo.boticario.com.br/' },
-  eudora: { nome: 'Eudora', revista: 'https://catalogo.eudora.com.br/REVISTA' },
-};
+import { copiarTexto, dadosDaFicha, lerCatalogo, marcas, normalizar } from './produtos.js?v=1';
+import { pedidoParaIA, prepararVenda, reais } from './vendas.js?v=3';
 
 const obter = (id) => document.getElementById(id);
 const campo = obter('busca');
 const categoria = obter('categoria');
+const publico = obter('publico');
 const melhores = obter('melhores');
 const conteudo = obter('conteudo');
 const mensagem = obter('mensagem');
@@ -33,11 +30,6 @@ let soMelhores = false;
 let produtoAtual;
 let estoque = lerEstoque();
 let consultarSaldo = criarConsultaDeEstoque(estoque);
-
-function normalizar(texto) {
-  return String(texto ?? '').normalize('NFD').replace(/\p{M}/gu, '')
-    .toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-}
 
 function elemento(tag, texto, classe) {
   const node = document.createElement(tag);
@@ -69,18 +61,9 @@ function abrirFicha(produto) {
   preencherPreco(obter('ficha-preco'), obter('ficha-anterior'), produto);
   preencherSaldo(obter('ficha-estoque'), produto.sku);
 
-  const dados = [
-    ['Código', produto.sku],
-    ['Apresentação', produto.volume],
-    ['Aromas e família olfativa', produto.aromas],
-    ['Indicado para', produto.indicacao],
-    ['Ocasião', produto.ocasiao],
-    ['Revista', produto.paginas?.length ? `Página ${produto.paginas.join(', ')}` : ''],
-  ];
   const detalhes = obter('ficha-detalhes');
   detalhes.replaceChildren();
-  for (const [rotulo, valor] of dados) {
-    if (!valor) continue;
+  for (const [rotulo, valor] of dadosDaFicha(produto)) {
     const linha = elemento('div');
     linha.append(elemento('dt', rotulo), elemento('dd', valor));
     detalhes.append(linha);
@@ -126,19 +109,6 @@ function atualizarVenda() {
   obter('estado-pedido').textContent = '';
 }
 
-async function copiarTexto(campoId, estadoId) {
-  const texto = obter(campoId);
-  const estado = obter(estadoId);
-  try {
-    await navigator.clipboard.writeText(texto.value);
-    estado.textContent = 'Copiado.';
-  } catch {
-    texto.focus();
-    texto.select();
-    estado.textContent = 'Texto selecionado. Use a opção de copiar do navegador.';
-  }
-}
-
 function criarProduto(produto) {
   const cartao = molde.content.cloneNode(true);
   const imagem = cartao.querySelector('.produto-imagem');
@@ -162,6 +132,7 @@ function filtrar() {
   const termos = normalizar(campo.value).split(' ').filter(Boolean);
   const filtrados = produtos.filter((produto) =>
     (!categoria.value || produto.categoria === categoria.value) &&
+    (!publico.value || produto.publico === publico.value) &&
     (!soDisponiveis.checked || consultarSaldo(produto.sku) > 0) &&
     termos.every((termo) => produto.busca.includes(termo)));
   if (!soMelhores) return filtrados;
@@ -180,7 +151,7 @@ function exibir() {
   const resumo = obter('resumo');
   const semResultados = soDisponiveis.checked
     ? 'Nenhum produto com saldo positivo corresponde à busca.'
-    : 'Nenhum produto encontrado. Tente outro nome ou categoria.';
+    : 'Nenhum produto encontrado. Tente outro nome ou ajuste os filtros.';
   resumo.textContent = itens.length
     ? `${quantidade.format(itens.length)} ${itens.length === 1 ? 'produto' : 'produtos'} · ${soMelhores ? 'menor preço por tipo' : 'ordem de menor preço em cada categoria'}`
     : semResultados;
@@ -264,7 +235,8 @@ async function carregarEstoque() {
 }
 
 async function iniciar() {
-  const chave = new URLSearchParams(window.location.search).get('marca');
+  const parametros = new URLSearchParams(window.location.search);
+  const chave = parametros.get('marca');
   if (!Object.hasOwn(marcas, chave)) {
     mensagem.textContent = 'Escolha uma das revistas disponíveis em Promoções.';
     return;
@@ -278,16 +250,14 @@ async function iniciar() {
   revista.href = marca.revista;
   revista.hidden = false;
   try {
-    const resposta = await fetch(`./dados/${chave}.json`);
-    if (!resposta.ok) throw Error('Catálogo indisponível.');
-    const catalogo = await resposta.json();
+    const catalogo = await lerCatalogo(chave);
     obter('edicao').textContent = catalogo.edicao;
     const observacao = obter('observacao');
     observacao.textContent = catalogo.observacao;
     observacao.hidden = !catalogo.observacao;
     produtos = catalogo.produtos.map((produto) => ({
       ...produto,
-      busca: normalizar([produto.nome, produto.sku, produto.categoria, produto.tipo, produto.aromas].join(' ')),
+      busca: normalizar([produto.nome, produto.sku, produto.linha, produto.categoria, produto.tipo, produto.aromas].join(' ')),
     })).sort((a, b) => a.preco - b.preco || ordem.compare(a.nome, b.nome));
 
     if (!produtos.length) {
@@ -298,7 +268,10 @@ async function iniciar() {
     for (const nome of categorias) categoria.add(new Option(nome, nome));
     conteudo.hidden = false;
     mensagem.hidden = true;
+    const produto = produtos.find(({ sku }) => sku === parametros.get('produto'));
+    if (produto) campo.value = produto.sku;
     exibirEstoque();
+    if (produto) abrirFicha(produto);
   } catch {
     mensagem.textContent = 'O catálogo pesquisável está indisponível. A revista oficial está disponível no link acima.';
   }
@@ -306,6 +279,7 @@ async function iniciar() {
 
 campo.addEventListener('input', exibir);
 categoria.addEventListener('change', exibir);
+publico.addEventListener('change', exibir);
 soDisponiveis.addEventListener('change', exibir);
 botaoImportar.addEventListener('click', () => arquivoEstoque.click());
 arquivoEstoque.addEventListener('change', carregarEstoque);
@@ -326,8 +300,8 @@ melhores.addEventListener('click', () => {
 });
 objetivoVenda.addEventListener('change', atualizarVenda);
 climaVenda.addEventListener('change', atualizarVenda);
-obter('copiar-mensagem').addEventListener('click', () => copiarTexto('mensagem-venda', 'estado-mensagem'));
-obter('copiar-pedido').addEventListener('click', () => copiarTexto('pedido-ia', 'estado-pedido'));
+obter('copiar-mensagem').addEventListener('click', () => copiarTexto(obter('mensagem-venda'), obter('estado-mensagem')));
+obter('copiar-pedido').addEventListener('click', () => copiarTexto(obter('pedido-ia'), obter('estado-pedido')));
 window.addEventListener('storage', (evento) => {
   if (ficha.open && evento.key === chaveClimaVenda) atualizarVenda();
   if (evento.key === chaveEstoque || evento.key === null) aplicarEstoque(lerEstoque());

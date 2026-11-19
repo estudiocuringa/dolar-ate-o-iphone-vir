@@ -258,6 +258,7 @@ export function prepararVenda(produto, contexto) {
   const proposta = contexto.objetivo === 'economizar' ? [preco, argumento] : [argumento, preco];
 
   return {
+    argumento: destaque?.argumento || fato,
     diferencial,
     estrategia,
     gancho,

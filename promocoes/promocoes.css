@@ -15,8 +15,8 @@
 [hidden] { display: none !important; }
 body { min-height: 100vh; margin: 0; background: radial-gradient(ellipse at 86% 0%, #eedadf, transparent 44rem), var(--fundo); }
 body[data-marca="boticario"] { --acento: #285745; background: radial-gradient(ellipse at 86% 0%, #dceadf, transparent 44rem), var(--fundo); }
-h1, h2, h3, p, dl, dd { margin: 0; }
-button, input, select { font: inherit; }
+h1, h2, h3, h4, h5, p, dl, dd { margin: 0; }
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
 .limite { width: min(100% - 3rem, 1096px); margin-inline: auto; }
@@ -53,6 +53,9 @@ button { cursor: pointer; }
 .abertura-texto { max-width: 42rem; }
 .abertura h1, .catalogo-topo h1 { font: 650 clamp(2.55rem, 6.8vw, 5rem)/.99 var(--titulo); letter-spacing: -.052em; }
 .abertura p { max-width: 36rem; margin-top: 1rem; font-size: clamp(1rem, 2.3vw, 1.22rem); color: #fff2ea; line-height: 1.5; }
+.atalho-sugestao { display: inline-flex; align-items: center; gap: .6rem; margin-top: 1.3rem; padding: .57rem .84rem; border: 1px solid #eac7d28a; border-radius: 9px; color: #fff8f4; font-size: .93rem; font-weight: 700; text-decoration: none; transition: background .18s ease; }
+.atalho-sugestao:hover { background: #fff5f31d; }
+.atalho-sugestao:focus-visible { outline-color: #ffdce5; }
 .revistas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-block: 1.15rem; }
 .revista {
   --revista-fundo: #e2ebe3;
@@ -95,7 +98,7 @@ button { cursor: pointer; }
 .estoque-filtro input { width: 1.08rem; height: 1.08rem; margin: 0; accent-color: var(--acento); }
 #estoque-estado { flex-basis: 100%; }
 #estoque-estado:empty { position: absolute; }
-.filtros { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; gap: .8rem; align-items: end; padding: .9rem; background: var(--superficie); border: 1px solid var(--borda); border-radius: 16px; }
+.filtros { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) minmax(0, .75fr) auto; gap: .8rem; align-items: end; padding: .9rem; background: var(--superficie); border: 1px solid var(--borda); border-radius: 16px; }
 .filtros label { display: block; margin-bottom: .3rem; color: var(--muted); font-size: .9375rem; font-weight: 700; }
 .filtros input, .filtros select { width: 100%; min-width: 0; min-height: 44px; background: #fff; color: var(--texto); border: 1px solid #cbb8bf; border-radius: 9px; padding: .5rem .62rem; }
 .filtros select { appearance: none; padding-right: 2rem; background: #fff; }
@@ -144,22 +147,69 @@ dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
 .acoes-venda { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .7rem; margin-top: .6rem; }
 .estado-copia { color: var(--muted); font-size: .85rem; }
 .origem { margin-top: .85rem; font-size: .9375rem; }
+.sugestao-pedido { scroll-margin-top: 1.2rem; margin-top: 1.7rem; border: 1px solid #ddcbd0; border-radius: 24px; background: var(--superficie); overflow: hidden; box-shadow: 0 14px 32px #5b343016; }
+.sugestao-capa { padding: clamp(1.35rem, 4vw, 2.6rem); color: #fff8f4; background: radial-gradient(ellipse at 92% 2%, #8b506f, transparent 67%), #43213a; }
+.sugestao-capa h2 { font: 650 clamp(2rem, 4.5vw, 3.4rem)/1.03 var(--titulo); letter-spacing: -.04em; }
+.sugestao-capa p { max-width: 39rem; margin-top: .64rem; color: #fceaf0; line-height: 1.6; }
+.sugestao-oficina { display: grid; grid-template-columns: minmax(0, .87fr) minmax(0, 1.13fr); }
+.pedido-form, .pedido-resultados { min-width: 0; padding: clamp(1rem, 3vw, 1.6rem); }
+.pedido-form { border-right: 1px solid var(--borda); }
+.pedido-form label, .pedido-form legend, .rec-rotulo { font-size: .94rem; font-weight: 720; }
+.pedido-form textarea, .pedido-form select, .pedido-form input[type="number"], .rec-texto { display: block; width: 100%; min-width: 0; margin-top: .38rem; padding: .66rem; border: 1px solid #c6b3bc; border-radius: 9px; background: #fffdfa; color: var(--texto); }
+.pedido-form textarea, .rec-texto { line-height: 1.48; resize: vertical; }
+.pedido-form select, .pedido-form input[type="number"] { min-height: 44px; }
+.pedido-ajuda { color: var(--muted); font-size: .87rem; line-height: 1.5; margin-top: .34rem; }
+.pedido-indicadores { margin: .95rem 0; padding: 0; border: 0; min-width: 0; }
+.pedido-opcoes { display: flex; flex-wrap: wrap; gap: .38rem; margin-top: .39rem; }
+.pedido-opcoes label { display: inline-flex; align-items: center; gap: .42rem; min-height: 39px; padding: .28rem .62rem; border: 1px solid var(--borda); border-radius: .55rem; cursor: pointer; }
+.pedido-opcoes label:has(input:checked) { border-color: #9f6c87; color: #5c2345; background: #f4e6ed; }
+.pedido-opcoes input { accent-color: var(--acento); width: 1rem; height: 1rem; margin: 0; }
+.pedido-complementos { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: .56rem; }
+.pedido-estoque { display: flex; flex-wrap: wrap; gap: .22rem .5rem; margin: .85rem 0; color: var(--muted); font-size: .86rem; }
+.pedido-estoque a { color: var(--acento); text-underline-offset: .18em; }
+.pedido-enviar { width: 100%; }
+.pedido-resultados { background: linear-gradient(168deg, #f7ecf0, #f9f3ef 27rem); }
+.pedido-resultados > h3 { font: 650 clamp(1.44rem, 3vw, 2rem)/1.12 var(--titulo); letter-spacing: -.022em; margin-bottom: .72rem; }
+#pedido-introducao { color: var(--muted); line-height: 1.55; }
+.pedido-recados { color: var(--muted); font-size: .88rem; line-height: 1.5; overflow-wrap: anywhere; }
+.pedido-recados:not(:empty) { margin-bottom: .8rem; }
+.pedido-recados p, .pedido-recados details { margin-top: .4rem; }
+.pedido-recados summary { cursor: pointer; font-weight: 650; }
+#pedido-resultados { display: grid; gap: .85rem; }
+.rec-produto { padding: clamp(.8rem, 2.8vw, 1.1rem); border: 1px solid var(--borda); border-radius: 15px; background: var(--superficie); box-shadow: 0 5px 18px #442b3410; animation: surgir .28s ease-out both; }
+.rec-indicadores { display: flex; flex-wrap: wrap; gap: .32rem; margin-bottom: .65rem; }
+.rec-indicadores span { padding: .2rem .54rem; border-radius: 99px; background: #eee1eb; color: #592447; font-size: .78rem; font-weight: 750; }
+.rec-produto-topo { display: flex; align-items: center; gap: .75rem; }
+.rec-imagem { flex: 0 0 auto; width: 78px; height: 84px; object-fit: contain; border: 1px solid #ead9df; border-radius: 10px; background: #fff; }
+.rec-identidade { min-width: 0; }
+.rec-marca, .rec-saldo { color: var(--muted); font-size: .83rem; line-height: 1.4; }
+.rec-nome { margin: .2rem 0; font-size: clamp(1.15rem, 2.5vw, 1.42rem); line-height: 1.2; overflow-wrap: anywhere; }
+.rec-valores { display: flex; align-items: baseline; gap: .55rem; }
+.rec-preco { color: var(--acento); font-size: 1.22rem; font-variant-numeric: tabular-nums; }
+.rec-textos { display: grid; gap: .72rem; margin-top: .82rem; }
+.rec-textos h5 { font-size: .95rem; margin-bottom: .14rem; }
+.rec-textos p { color: var(--muted); line-height: 1.48; }
+.rec-mensagem { padding: .75rem; border: 1px solid #e6d5df; border-radius: 10px; background: #f7edf2; }
+.rec-estrategia { margin-bottom: 0; }
+.rec-estrategia .rec-limite-titulo { margin-top: .55rem; color: var(--texto); font-weight: 700; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes surgir { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
-  .revista, .produto, dialog[open] { animation: none; }
-  .revista-arte img, .acao { transition: none; }
+  .revista, .produto, .rec-produto, dialog[open] { animation: none; }
+  .revista-arte img, .acao, .atalho-sugestao { transition: none; }
 }
 @media (max-width: 850px) {
   .produtos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .pesquisa { grid-column: 1 / -1; }
+  .pesquisa, #melhores { grid-column: 1 / -1; }
 }
 @media (max-width: 690px) {
   .revistas { grid-template-columns: minmax(0, 1fr); }
   .revista-arte { min-height: 204px; }
   .revista-arte img { width: min(82%, 134px); }
   .produtos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sugestao-oficina { grid-template-columns: minmax(0, 1fr); }
+  .pedido-form { border-right: 0; border-bottom: 1px solid var(--borda); }
 }
 @media (max-width: 460px) {
   .limite { width: calc(100% - 1.5rem); }
