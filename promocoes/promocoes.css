@@ -105,16 +105,32 @@ button { cursor: pointer; }
 .produto-preco { font-size: 1.18rem; color: var(--acento); font-variant-numeric: tabular-nums; }
 del { color: var(--muted); font-size: .875rem; }
 .ver-produto { align-self: start; margin-top: .65rem; }
-dialog { width: min(100% - 1.5rem, 570px); max-height: calc(100dvh - 2.5rem); padding: 1.2rem; overflow: auto; border: 1px solid var(--borda); border-radius: 20px; background: var(--superficie); color: var(--texto); }
+dialog { width: min(100% - 1.5rem, 640px); max-height: calc(100dvh - 2.5rem); padding: 0 clamp(.85rem, 4vw, 1.35rem) 1.2rem; overflow: auto; border: 1px solid var(--borda); border-radius: 20px; background: var(--superficie); color: var(--texto); }
 dialog[open] { animation: surgir .2s ease-out; }
 dialog::backdrop { background: #291725aa; backdrop-filter: blur(3px); }
-.ficha-cabecalho { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.ficha-cabecalho { position: sticky; z-index: 1; top: 0; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-block: .55rem; background: var(--superficie); }
 dialog h2 { font: 650 clamp(1.55rem, 4.5vw, 2rem)/1.12 var(--titulo); margin-block: .65rem; }
-.especificacoes { display: grid; gap: .68rem; margin: 1rem 0; }
+.ficha-diferencial { margin-top: 1rem; padding-left: .9rem; border-left: 3px solid var(--acento); }
+.ficha-diferencial h3, .sugestao h3 { margin-bottom: .38rem; font-size: 1.08rem; }
+.ficha-diferencial p, .especificacoes dd, .sugestao p, .ficha-secao p { color: var(--muted); line-height: 1.45; }
+.ficha-secao { margin-block: .9rem; padding: .65rem .75rem; border: 1px solid var(--borda); border-radius: 10px; }
+.ficha-secao summary { min-height: 1.6rem; font-weight: 700; cursor: pointer; }
+.ficha-secao[open] summary { margin-bottom: .7rem; }
+.especificacoes { display: grid; gap: .68rem; }
 .especificacoes dt { font-weight: 725; margin-bottom: .16rem; }
-.especificacoes dd, .sugestao p { color: var(--muted); line-height: 1.45; }
-.sugestao { border-radius: 12px; padding: .85rem; background: #f1e4eb; }
-.sugestao h3 { font-size: 1rem; margin-bottom: .36rem; }
+.sugestao { --fundo-venda: #f4e8ee; border-radius: 12px; padding: 1rem; background: var(--fundo-venda); }
+body[data-marca="boticario"] .sugestao { --fundo-venda: #e9f0e9; }
+.contexto-venda { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-top: .75rem; }
+.contexto-venda label, .rotulo-mensagem { color: var(--texto); font-size: .9375rem; font-weight: 700; }
+.contexto-venda select, dialog textarea { display: block; width: 100%; min-width: 0; margin-top: .3rem; padding: .55rem; border: 1px solid #ae9ca3; border-radius: 8px; background: var(--superficie); color: var(--texto); font: inherit; font-weight: 400; }
+.contexto-venda select { min-height: 44px; }
+dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
+.sugestao .clima-origem { display: flex; flex-wrap: wrap; align-items: baseline; gap: .22rem .62rem; margin: .45rem 0 .85rem; font-size: .84rem; }
+.clima-origem a { color: var(--acento); text-underline-offset: .18em; }
+.sugestao .gancho { margin-top: .6rem; padding-left: .65rem; border-left: 2px solid var(--acento); }
+.rotulo-mensagem { display: block; margin-top: .9rem; }
+.acoes-venda { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .7rem; margin-top: .6rem; }
+.estado-copia { color: var(--muted); font-size: .85rem; }
 .origem { margin-top: .85rem; font-size: .9375rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @keyframes surgir { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
@@ -142,4 +158,7 @@ dialog h2 { font: 650 clamp(1.55rem, 4.5vw, 2rem)/1.12 var(--titulo); margin-blo
   .produto-corpo { padding: .65rem; }
   .produto-imagem { height: 110px; }
   .filtros { gap: .6rem; }
+}
+@media (max-width: 420px) {
+  .contexto-venda { grid-template-columns: minmax(0, 1fr); }
 }

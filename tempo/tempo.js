@@ -1,3 +1,5 @@
+import { salvarClimaVenda } from './clima-venda.js?v=1';
+
 const obter = (id) => document.getElementById(id);
 const formCidade = obter('form-cidade');
 const consulta = obter('consulta');
@@ -257,6 +259,10 @@ async function consultar() {
       throw new Error('Previsão incompleta.');
     }
     exibirPrevisao(previsao);
+    if (Number(new URLSearchParams(window.location.search).get('cidade')) === municipioSelecionado.id) {
+      const [, descricao, cena] = dadosDoTempo(previsao.current.weather_code);
+      salvarClimaVenda(nomeCompleto(municipioSelecionado), previsao.current, cena, descricao);
+    }
     estado.hidden = true;
   } catch {
     if (requisicao !== pedido) return;

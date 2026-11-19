@@ -1,3 +1,6 @@
+import { chaveClimaVenda, lerClimaVenda } from '../tempo/clima-venda.js?v=1';
+import { pedidoParaIA, prepararVenda, reais } from './vendas.js?v=1';
+
 const marcas = {
   boticario: { nome: 'O Boticário', revista: 'https://catalogo.boticario.com.br/' },
   eudora: { nome: 'Eudora', revista: 'https://catalogo.eudora.com.br/REVISTA' },
@@ -12,13 +15,15 @@ const mensagem = obter('mensagem');
 const ficha = obter('ficha');
 const molde = obter('molde-produto');
 const resultados = obter('resultados');
-const dinheiro = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const objetivoVenda = obter('objetivo-venda');
+const climaVenda = obter('clima-venda');
 const quantidade = new Intl.NumberFormat('pt-BR');
 const ordem = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
 const tamanhoGrupo = 4;
 const principais = ['Perfumaria', 'Cabelo', 'Maquiagem', 'Corpo e Banho', 'Cuidados com a pele'];
 let produtos = [];
 let soMelhores = false;
+let produtoAtual;
 
 function normalizar(texto) {
   return String(texto ?? '').normalize('NFD').replace(/\p{M}/gu, '')
@@ -33,12 +38,13 @@ function elemento(tag, texto, classe) {
 }
 
 function preencherPreco(preco, anterior, produto) {
-  preco.textContent = dinheiro.format(produto.preco);
+  preco.textContent = reais(produto.preco);
   anterior.hidden = !(produto.anterior > produto.preco);
-  anterior.textContent = anterior.hidden ? '' : dinheiro.format(produto.anterior);
+  anterior.textContent = anterior.hidden ? '' : reais(produto.anterior);
 }
 
 function abrirFicha(produto) {
+  produtoAtual = produto;
   obter('ficha-tipo').textContent = `${produto.categoria} · ${produto.tipo}`;
   obter('ficha-nome').textContent = produto.nome;
   preencherPreco(obter('ficha-preco'), obter('ficha-anterior'), produto);
@@ -47,7 +53,6 @@ function abrirFicha(produto) {
     ['Código', produto.sku],
     ['Apresentação', produto.volume],
     ['Aromas e família olfativa', produto.aromas],
-    ['Diferencial', produto.diferencial || 'Consulte a ficha original para mais detalhes.'],
     ['Indicado para', produto.indicacao],
     ['Ocasião', produto.ocasiao],
     ['Revista', produto.paginas?.length ? `Página ${produto.paginas.join(', ')}` : ''],
@@ -61,23 +66,55 @@ function abrirFicha(produto) {
     detalhes.append(linha);
   }
 
-  obter('ficha-venda').textContent = produto.venda || sugerirVenda(produto);
   obter('ficha-fonte').href = produto.fonte;
+  atualizarVenda();
   ficha.showModal();
+  ficha.scrollTop = 0;
 }
 
-function sugerirVenda(produto) {
-  if (produto.tipo.startsWith('Refil de ')) return 'Confirme se a pessoa já tem a embalagem compatível. Compare o preço do refil com o da versão completa e explique como incluí-lo na rotina.';
-  if (produto.tipo.startsWith('Kits de ')) return 'Pergunte para quem é o presente e qual é o orçamento. Mostre os itens do kit e explique como podem ser usados juntos.';
-  switch (produto.categoria) {
-    case 'Perfumaria':
-      return 'Pergunte quais fragrâncias a pessoa já usa e em que ocasião pretende usar esta. Apresente as notas descritas pela marca e sugira experimentar na pele antes de escolher.';
-    case 'Cabelo':
-      return 'Pergunte como é a rotina capilar e qual resultado a pessoa procura. Mostre como este produto entra na rotina e ofereça um complemento apenas se ele atender a outra necessidade.';
-    case 'Maquiagem':
-      return 'Pergunte sobre acabamento, tom e ocasião. Mostre como o produto fica numa aplicação leve e, se possível, compare com outra opção de cor ou acabamento.';
-    default:
-      return 'Pergunte se a compra é para uso próprio ou presente. Mostre o diferencial e o tamanho do item e confirme se ele atende à rotina e ao orçamento da pessoa.';
+function contextoDeVenda() {
+  const consultado = lerClimaVenda();
+  const resumoClima = obter('clima-consultado');
+  const opcaoPrevisao = climaVenda.querySelector('option[value="previsao"]');
+  opcaoPrevisao.disabled = !consultado;
+  resumoClima.hidden = !consultado;
+  const tempoConsultado = consultado ? `${consultado.cidade} · ${consultado.temperatura} °C · ${consultado.descricao}` : '';
+  resumoClima.textContent = tempoConsultado;
+  if (!consultado && climaVenda.value === 'previsao') climaVenda.value = '';
+  const usaPrevisao = climaVenda.value === 'previsao';
+  return {
+    objetivo: objetivoVenda.value,
+    perfil: objetivoVenda.selectedOptions[0].textContent,
+    clima: usaPrevisao ? consultado.clima : climaVenda.value,
+    tempo: usaPrevisao ? tempoConsultado : climaVenda.value && climaVenda.selectedOptions[0].textContent,
+    edicao: obter('edicao').textContent,
+  };
+}
+
+function atualizarVenda() {
+  const contexto = contextoDeVenda();
+  const venda = prepararVenda(produtoAtual, contexto);
+  obter('ficha-diferencial').textContent = venda.diferencial;
+  obter('ficha-venda').textContent = venda.estrategia;
+  const gancho = obter('ficha-gancho');
+  gancho.hidden = !venda.gancho;
+  gancho.textContent = venda.gancho;
+  obter('mensagem-venda').value = venda.mensagem;
+  obter('pedido-ia').value = pedidoParaIA(produtoAtual, contexto, venda);
+  obter('estado-mensagem').textContent = '';
+  obter('estado-pedido').textContent = '';
+}
+
+async function copiarTexto(campoId, estadoId) {
+  const texto = obter(campoId);
+  const estado = obter(estadoId);
+  try {
+    await navigator.clipboard.writeText(texto.value);
+    estado.textContent = 'Copiado.';
+  } catch {
+    texto.focus();
+    texto.select();
+    estado.textContent = 'Texto selecionado. Use a opção de copiar do navegador.';
   }
 }
 
@@ -201,5 +238,12 @@ melhores.addEventListener('click', () => {
   soMelhores = !soMelhores;
   melhores.setAttribute('aria-pressed', String(soMelhores));
   exibir();
+});
+objetivoVenda.addEventListener('change', atualizarVenda);
+climaVenda.addEventListener('change', atualizarVenda);
+obter('copiar-mensagem').addEventListener('click', () => copiarTexto('mensagem-venda', 'estado-mensagem'));
+obter('copiar-pedido').addEventListener('click', () => copiarTexto('pedido-ia', 'estado-pedido'));
+window.addEventListener('storage', (evento) => {
+  if (ficha.open && evento.key === chaveClimaVenda) atualizarVenda();
 });
 iniciar();

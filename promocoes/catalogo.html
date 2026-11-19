@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f7f0ec">
   <title>Catálogo | Promoções</title>
   <link rel="icon" href="../icone.png" type="image/png">
-  <link rel="stylesheet" href="./promocoes.css?v=1">
-  <script src="./catalogo.js?v=1" type="module"></script>
+  <link rel="stylesheet" href="./promocoes.css?v=2">
+  <script src="./catalogo.js?v=2" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -66,12 +66,59 @@
     </div>
     <h2 id="ficha-nome"></h2>
     <p class="produto-valores"><strong id="ficha-preco" class="produto-preco"></strong><del id="ficha-anterior" hidden></del></p>
-    <dl class="especificacoes" id="ficha-detalhes"></dl>
-    <section class="sugestao" aria-labelledby="sugestao-titulo">
-      <h3 id="sugestao-titulo">Sugestão de venda</h3>
-      <p id="ficha-venda"></p>
+    <section class="ficha-diferencial" aria-labelledby="diferencial-titulo">
+      <h3 id="diferencial-titulo">Por que vale oferecer</h3>
+      <p id="ficha-diferencial"></p>
     </section>
-    <p class="origem"><a id="ficha-fonte" target="_blank" rel="noopener noreferrer">Ver página da revista</a></p>
+    <details class="ficha-secao">
+      <summary>Especificações do produto</summary>
+      <dl class="especificacoes" id="ficha-detalhes"></dl>
+      <p class="origem"><a id="ficha-fonte" target="_blank" rel="noopener noreferrer">Ver página da revista</a></p>
+    </details>
+    <section class="sugestao" aria-labelledby="sugestao-titulo">
+      <h3 id="sugestao-titulo">Estratégia para vender à distância</h3>
+      <div class="contexto-venda">
+        <label for="objetivo-venda">Perfil da compra
+          <select id="objetivo-venda">
+            <option value="uso">Uso próprio</option>
+            <option value="presente">Presente</option>
+            <option value="economizar">Economizar</option>
+          </select>
+        </label>
+        <label for="clima-venda">Clima do cliente
+          <select id="clima-venda" aria-describedby="clima-origem">
+            <option value="">Sem gancho de clima</option>
+            <option value="calor">Calor</option>
+            <option value="frio">Frio</option>
+            <option value="umido">Chuva ou umidade</option>
+            <option value="previsao" disabled>Última cidade consultada</option>
+          </select>
+        </label>
+      </div>
+      <p class="clima-origem" id="clima-origem">
+        <span id="clima-consultado" hidden></span>
+        <a href="../tempo/" target="_blank" rel="noopener">Consultar cidade na previsão</a>
+      </p>
+      <p id="ficha-venda"></p>
+      <p id="ficha-gancho" class="gancho" hidden></p>
+      <label for="mensagem-venda" class="rotulo-mensagem">Mensagem para WhatsApp</label>
+      <textarea id="mensagem-venda" rows="5" readonly></textarea>
+      <div class="acoes-venda">
+        <button class="acao" id="copiar-mensagem" type="button">Copiar mensagem</button>
+        <span id="estado-mensagem" class="estado-copia" role="status"></span>
+      </div>
+    </section>
+    <details class="ficha-secao" id="personalizar-ia">
+      <summary>Personalizar com IA</summary>
+      <p>Copie o pedido e cole no ChatGPT para adaptar o argumento e preparar uma resposta à objeção do cliente.</p>
+      <label for="pedido-ia" class="sr-only">Pedido para a IA</label>
+      <textarea id="pedido-ia" rows="5" readonly></textarea>
+      <div class="acoes-venda">
+        <button class="acao secundaria" id="copiar-pedido" type="button">Copiar pedido para IA</button>
+        <a class="acao secundaria" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">Abrir ChatGPT</a>
+        <span id="estado-pedido" class="estado-copia" role="status"></span>
+      </div>
+    </details>
   </dialog>
 </body>
 </html>
