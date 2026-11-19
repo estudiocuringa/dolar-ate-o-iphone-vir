@@ -1,0 +1,302 @@
+const obter = (id) => document.getElementById(id);
+const formCidade = obter('form-cidade');
+const consulta = obter('consulta');
+const sugestoes = obter('sugestoes');
+const buscaEstado = obter('busca-estado');
+const cidades = obter('cidades');
+const estado = obter('previsao-estado');
+const botaoAtualizar = obter('atualizar');
+const condicoes = obter('condicoes');
+const semana = obter('semana');
+const dataAtual = obter('data-atual');
+const moldeDia = obter('molde-dia');
+
+const INTERVALO = 15 * 60_000;
+const MUNICIPIO_INICIAL = { id: 3550308, nome: 'São Paulo', uf: 'SP', lat: -23.5548, lon: -46.579 };
+const ESTADOS = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará',
+  DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso',
+  MS: 'Mato Grosso do Sul', MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba', PR: 'Paraná',
+  PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte',
+  RS: 'Rio Grande do Sul', RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo',
+  SE: 'Sergipe', TO: 'Tocantins',
+};
+
+const TEMPO = {
+  0: ['☀️', 'Céu limpo'],
+  1: ['🌤️', 'Poucas nuvens'],
+  2: ['⛅', 'Parcialmente nublado'],
+  3: ['☁️', 'Encoberto'],
+  45: ['🌫️', 'Nevoeiro'],
+  48: ['🌫️', 'Nevoeiro com geada'],
+  51: ['🌦️', 'Garoa fraca'],
+  53: ['🌦️', 'Garoa moderada'],
+  55: ['🌧️', 'Garoa intensa'],
+  56: ['🌧️', 'Garoa congelante'],
+  57: ['🌧️', 'Garoa congelante intensa'],
+  61: ['🌦️', 'Chuva fraca'],
+  63: ['🌧️', 'Chuva moderada'],
+  65: ['🌧️', 'Chuva forte'],
+  66: ['🌧️', 'Chuva congelante'],
+  67: ['🌧️', 'Chuva congelante forte'],
+  71: ['🌨️', 'Neve fraca'],
+  73: ['🌨️', 'Neve moderada'],
+  75: ['🌨️', 'Neve forte'],
+  77: ['🌨️', 'Grãos de neve'],
+  80: ['🌦️', 'Pancadas fracas'],
+  81: ['🌧️', 'Pancadas moderadas'],
+  82: ['🌧️', 'Pancadas fortes'],
+  85: ['🌨️', 'Pancadas de neve fracas'],
+  86: ['🌨️', 'Pancadas de neve fortes'],
+  95: ['⛈️', 'Trovoadas'],
+  96: ['⛈️', 'Trovoadas com granizo'],
+  99: ['⛈️', 'Trovoadas com granizo forte'],
+};
+
+const formatoDia = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'short', timeZone: 'UTC',
+});
+
+let catalogo;
+let numeroBusca = 0;
+let municipioSelecionado;
+let requisicao;
+let ultimaConsulta = 0;
+
+function normalizar(texto) {
+  return texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function nomeCompleto({ nome, uf }) {
+  return `${nome}, ${uf}`;
+}
+
+async function lerJson(url, opcao) {
+  const resposta = await fetch(url, opcao);
+  if (!resposta.ok) throw new Error('Consulta indisponível.');
+  return resposta.json();
+}
+
+function obterCatalogo() {
+  if (!catalogo) {
+    catalogo = lerJson('./municipios.json', { signal: AbortSignal.timeout(10_000) })
+      .then((municipios) => municipios.map(([id, nome, uf, lat, lon]) => {
+        const chave = normalizar(nome);
+        return { id, nome, uf, lat, lon, chaves: [
+          chave, `${chave} ${uf.toLowerCase()}`, `${chave} ${normalizar(ESTADOS[uf])}`,
+        ] };
+      }))
+      .catch((erro) => {
+        catalogo = undefined;
+        throw erro;
+      });
+  }
+  return catalogo;
+}
+
+function pontuar(municipio, termo) {
+  if (municipio.chaves.includes(termo)) return 3;
+  if (municipio.chaves.some((chave) => chave.startsWith(termo))) return 2;
+  if (municipio.chaves[0].includes(termo)) return 1;
+  return 0;
+}
+
+function fecharSugestoes() {
+  numeroBusca++;
+  sugestoes.hidden = true;
+}
+
+async function pesquisar(enviar = false) {
+  const termo = normalizar(consulta.value);
+  if (termo.length < 2) {
+    fecharSugestoes();
+    return;
+  }
+  const pedido = ++numeroBusca;
+  sugestoes.hidden = false;
+  buscaEstado.textContent = 'Buscando cidades…';
+  cidades.replaceChildren();
+
+  try {
+    const municipios = await obterCatalogo();
+    if (pedido !== numeroBusca) return;
+    const resultados = municipios.map((municipio) => ({ municipio, pontos: pontuar(municipio, termo) }))
+      .filter(({ pontos }) => pontos > 0)
+      .sort((a, b) => b.pontos - a.pontos);
+    const exatos = resultados.filter(({ pontos }) => pontos === 3);
+    if (enviar && exatos.length === 1) {
+      selecionar(exatos[0].municipio);
+      return;
+    }
+    if (enviar && resultados.length === 1) {
+      selecionar(resultados[0].municipio);
+      return;
+    }
+    buscaEstado.textContent = resultados.length === 0
+      ? 'Cidade não encontrada. Confira a grafia ou tente outro município.'
+      : resultados.length > 8 ? 'Digite mais letras ou a sigla do estado para refinar.' : 'Escolha sua cidade.';
+    for (const { municipio } of resultados.slice(0, 8)) {
+      const item = document.createElement('li');
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.textContent = nomeCompleto(municipio);
+      botao.addEventListener('click', () => selecionar(municipio));
+      item.append(botao);
+      cidades.append(item);
+    }
+  } catch {
+    if (pedido !== numeroBusca) return;
+    buscaEstado.textContent = 'A busca está indisponível. Clique em Buscar para tentar novamente.';
+  }
+}
+
+function selecionar(municipio) {
+  fecharSugestoes();
+  consulta.value = nomeCompleto(municipio);
+  const url = new URL(window.location.href);
+  url.searchParams.set('cidade', municipio.id);
+  window.history.replaceState(null, '', url);
+  abrirPrevisao(municipio);
+  obter('municipio').focus({ preventScroll: true });
+}
+
+function abrirPrevisao(municipio) {
+  municipioSelecionado = municipio;
+  obter('municipio').textContent = nomeCompleto(municipio);
+  condicoes.hidden = semana.hidden = dataAtual.hidden = true;
+  cidades.replaceChildren();
+  consultar();
+}
+
+function dadosDoTempo(codigo, noite = false) {
+  if (noite && codigo === 0) return ['🌙', 'Céu limpo'];
+  if (noite && codigo === 1) return ['🌙', 'Poucas nuvens'];
+  return TEMPO[codigo] ?? ['🌡️', 'Condição indisponível'];
+}
+
+function medida(n, unidade) {
+  return Number.isFinite(n) ? `${Math.round(n)}${unidade}` : '—';
+}
+
+function dataCurta(data) {
+  return `${data.slice(8, 10)}/${data.slice(5, 7)}`;
+}
+
+function exibirPrevisao({ current, daily }) {
+  const [icone, descricao] = dadosDoTempo(current.weather_code, current.is_day === 0);
+  const instante = document.createElement('time');
+  instante.dateTime = current.time;
+  instante.textContent = `${dataCurta(current.time)}, ${current.time.slice(11, 16)}`;
+  dataAtual.replaceChildren('Dados de ', instante, ' (hora local)');
+  obter('icone-atual').textContent = icone;
+  obter('temperatura-atual').textContent = medida(current.temperature_2m, '°C');
+  obter('descricao-atual').textContent = descricao;
+  obter('sensacao').textContent = medida(current.apparent_temperature, '°C');
+  obter('umidade').textContent = medida(current.relative_humidity_2m, '%');
+  obter('vento').textContent = medida(current.wind_speed_10m, ' km/h');
+
+  const dias = document.createDocumentFragment();
+  daily.time.forEach((data, i) => {
+    const dia = moldeDia.content.cloneNode(true);
+    const [icone, descricao] = dadosDoTempo(daily.weather_code?.[i]);
+    dia.querySelector('h3').textContent = data === current.time.slice(0, 10)
+      ? 'Hoje' : formatoDia.format(new Date(`${data}T12:00:00Z`)).replace('.', '');
+    const diaData = dia.querySelector('time');
+    diaData.dateTime = data;
+    diaData.textContent = dataCurta(data);
+    dia.querySelector('.icone-dia').textContent = icone;
+    dia.querySelector('.condicao-dia').textContent = descricao;
+    dia.querySelector('.maxima-valor').textContent = medida(daily.temperature_2m_max?.[i], '°');
+    dia.querySelector('.minima-valor').textContent = medida(daily.temperature_2m_min?.[i], '°');
+    dia.querySelector('.chuva').textContent = `Chuva ${medida(daily.precipitation_probability_max?.[i], '%')}`;
+    dias.append(dia);
+  });
+  obter('dias').replaceChildren(dias);
+  condicoes.hidden = semana.hidden = dataAtual.hidden = false;
+}
+
+async function consultar() {
+  requisicao?.abort();
+  const pedido = new AbortController();
+  requisicao = pedido;
+  const timeout = setTimeout(() => pedido.abort(), 10_000);
+  ultimaConsulta = Date.now();
+  botaoAtualizar.setAttribute('aria-disabled', 'true');
+  estado.hidden = false;
+  estado.textContent = condicoes.hidden ? 'Consultando a previsão…' : 'Atualizando a previsão…';
+
+  const { lat, lon } = municipioSelecionado;
+  const parametros = new URLSearchParams({
+    latitude: lat,
+    longitude: lon,
+    timezone: 'auto',
+    forecast_days: 7,
+    current: 'temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+  });
+  try {
+    const previsao = await lerJson(`https://api.open-meteo.com/v1/forecast?${parametros}`, {
+      signal: pedido.signal, cache: 'no-cache',
+    });
+    if (requisicao !== pedido) return;
+    if (!previsao.current?.time || previsao.daily?.time?.length !== 7) {
+      throw new Error('Previsão incompleta.');
+    }
+    exibirPrevisao(previsao);
+    estado.hidden = true;
+  } catch {
+    if (requisicao !== pedido) return;
+    estado.textContent = condicoes.hidden
+      ? 'A previsão está indisponível no momento. Tente atualizar novamente.'
+      : 'Falha ao atualizar. Os dados da última consulta continuam abaixo.';
+  } finally {
+    clearTimeout(timeout);
+    if (requisicao === pedido) {
+      requisicao = undefined;
+      botaoAtualizar.removeAttribute('aria-disabled');
+    }
+  }
+}
+
+async function iniciar() {
+  let municipio = MUNICIPIO_INICIAL;
+  const id = Number(new URLSearchParams(window.location.search).get('cidade'));
+  if (id && id !== MUNICIPIO_INICIAL.id) {
+    try {
+      const municipios = await obterCatalogo();
+      if (municipioSelecionado) return;
+      municipio = municipios.find((opcao) => opcao.id === id) ?? municipio;
+    } catch {
+      if (municipioSelecionado) return;
+    }
+  }
+  if (municipio.id === id) consulta.value = nomeCompleto(municipio);
+  abrirPrevisao(municipio);
+}
+
+function atualizarSeNecessario() {
+  if (municipioSelecionado && !document.hidden && !requisicao && Date.now() - ultimaConsulta >= INTERVALO) consultar();
+}
+
+consulta.addEventListener('input', () => pesquisar());
+formCidade.addEventListener('submit', (evento) => {
+  evento.preventDefault();
+  pesquisar(true);
+});
+formCidade.addEventListener('keydown', (evento) => {
+  if (evento.key === 'Escape' && !sugestoes.hidden) {
+    evento.preventDefault();
+    fecharSugestoes();
+    consulta.focus();
+  }
+});
+document.addEventListener('click', (evento) => {
+  if (!formCidade.contains(evento.target) && !sugestoes.hidden) fecharSugestoes();
+});
+document.addEventListener('visibilitychange', atualizarSeNecessario);
+botaoAtualizar.addEventListener('click', () => {
+  if (municipioSelecionado && !requisicao) consultar();
+});
+setInterval(atualizarSeNecessario, 60_000);
+iniciar();

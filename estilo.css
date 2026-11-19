@@ -181,3 +181,8 @@ main { padding-block: 28px 27px; }
   .moeda-usd { left: -9%; }
   .bandeiras { display: none; }
 }
+
+@media (max-width: 625px) {
+  .topo-interno { flex-wrap: wrap; padding-block: .5rem; }
+  .navegacao { flex-wrap: wrap; gap: .35rem .7rem; }
+}

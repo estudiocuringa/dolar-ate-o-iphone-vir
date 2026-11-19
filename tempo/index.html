@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Consulte as condições atuais e a previsão de sete dias para cidades de todo o Brasil.">
+  <meta name="theme-color" content="#eaf6ff">
+  <title>Previsão do tempo | Dolar até o Iphone vir</title>
+  <link rel="icon" href="../icone.png" type="image/png">
+  <link rel="stylesheet" href="./tempo.css?v=1">
+  <script src="./tempo.js?v=1" type="module"></script>
+</head>
+<body>
+  <header class="topo">
+    <nav class="limite navegacao" aria-label="Seções do site">
+      <a class="marca" href="../" aria-label="Dolar até o Iphone vir, início"><span aria-hidden="true">$</span></a>
+      <a href="../#cotacao">Cotação</a>
+      <a href="../#historico">Histórico</a>
+      <a href="./" aria-current="page">Previsão do tempo</a>
+    </nav>
+  </header>
+
+  <main class="limite">
+    <section class="busca" aria-labelledby="titulo">
+      <div class="busca-conteudo">
+        <h1 id="titulo">Previsão do tempo</h1>
+        <p>Veja como está o tempo e o que esperar nos próximos sete dias.</p>
+
+        <form id="form-cidade" class="form-cidade" role="search" aria-label="Consultar por cidade">
+          <label for="consulta">Sua cidade</label>
+          <div class="entrada">
+            <input type="search" id="consulta" name="consulta" placeholder="Ex.: São Paulo, SP" autocomplete="off" maxlength="80" required minlength="2" aria-controls="sugestoes">
+            <button type="submit" class="acao">Buscar</button>
+          </div>
+          <div id="sugestoes" class="sugestoes" hidden>
+            <p id="busca-estado" role="status"></p>
+            <ul id="cidades" aria-label="Cidades encontradas"></ul>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="agora" aria-labelledby="municipio">
+      <div class="separador">
+        <div>
+          <h2 id="municipio" tabindex="-1">São Paulo, SP</h2>
+          <p id="data-atual" class="secundario" hidden></p>
+        </div>
+        <button id="atualizar" type="button" class="botao">Atualizar previsão</button>
+      </div>
+      <p id="previsao-estado" class="mensagem secundario" role="status">Consultando a previsão…</p>
+      <div id="condicoes" class="condicoes" hidden>
+        <div class="temperatura-agora">
+          <span id="icone-atual" class="icone-atual" aria-hidden="true"></span>
+          <p id="temperatura-atual" class="temperatura"></p>
+          <div class="descricao-atual">
+            <p class="secundario">Agora</p>
+            <p id="descricao-atual"></p>
+          </div>
+        </div>
+        <dl class="medidas">
+          <div><dt>Sensação</dt><dd id="sensacao">—</dd></div>
+          <div><dt>Umidade</dt><dd id="umidade">—</dd></div>
+          <div><dt>Vento</dt><dd id="vento">—</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="semana" class="semana" aria-labelledby="titulo-semana" hidden>
+      <div class="separador">
+        <div>
+          <h2 id="titulo-semana">Próximos 7 dias</h2>
+          <p class="secundario">Máxima, mínima e chance de chuva.</p>
+        </div>
+      </div>
+      <ol id="dias" class="dias"></ol>
+      <template id="molde-dia">
+        <li class="dia">
+          <h3></h3>
+          <time></time>
+          <span class="icone-dia" aria-hidden="true"></span>
+          <p class="condicao-dia"></p>
+          <p class="extremos"><span><span class="sr-only">Máxima </span><span class="maxima-valor"></span></span><span class="minima"><span class="sr-only">Mínima </span><span class="minima-valor"></span></span></p>
+          <p class="chuva"></p>
+        </li>
+      </template>
+    </section>
+
+    <noscript><p class="mensagem">Ative o JavaScript para consultar a previsão.</p></noscript>
+    <footer class="rodape">
+      <p>Previsão por modelos meteorológicos. <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></p>
+      <p>Localidades do <a href="https://www.ibge.gov.br/geociencias/organizacao-do-territorio/estrutura-territorial/27385-localidades.html" target="_blank" rel="noopener noreferrer">IBGE</a></p>
+    </footer>
+  </main>
+</body>
+</html>
