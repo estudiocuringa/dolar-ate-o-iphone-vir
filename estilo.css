@@ -25,9 +25,10 @@ a { color: inherit; }
 .topo { background: #240810; border-bottom: 1px solid #713041; }
 .topo-interno { min-height: 66px; display: flex; align-items: center; justify-content: space-between; gap: .8rem; }
 .navegacao { display: flex; align-items: center; gap: 1.15rem; }
-.navegacao a { text-decoration: none; color: #f1ccd2; font-size: .9375rem; font-weight: 700; }
-.navegacao a:hover { color: var(--amarelo); }
-.marca { display: grid; place-items: center; }
+.navegacao a { padding-block: .4rem; text-decoration: none; color: #f1ccd2; font-size: .9375rem; font-weight: 700; }
+.navegacao a:hover, .navegacao [aria-current="page"] { color: var(--amarelo); }
+.navegacao [aria-current="page"] { box-shadow: inset 0 -2px var(--amarelo); }
+.navegacao .link-dolar { display: inline-flex; align-items: center; gap: .5rem; }
 .marca-icone { display: grid; place-items: center; color: #351016; background: var(--amarelo); border-radius: 11px; width: 34px; height: 34px; font-size: 1.25rem; font-weight: 900; }
 .botao { border: 1px solid #814552; color: var(--texto); background: #3b1622; border-radius: 11px; transition: background-color .18s, border-color .18s; }
 .botao:hover { background: #572130; border-color: #b65f70; }

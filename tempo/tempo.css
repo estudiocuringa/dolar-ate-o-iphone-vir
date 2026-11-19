@@ -25,6 +25,7 @@ button { cursor: pointer; }
 .navegacao a { color: #314f6a; text-decoration: none; font-weight: 700; font-size: .9375rem; padding-block: .4rem; }
 .navegacao a:hover, .navegacao [aria-current="page"] { color: var(--azul-forte); }
 .navegacao [aria-current="page"] { box-shadow: inset 0 -2px var(--azul); }
+.navegacao .link-dolar { display: inline-flex; align-items: center; gap: .5rem; }
 .navegacao .marca { display: grid; place-items: center; width: 35px; height: 35px; padding: 0; border-radius: 11px; background: #ffe17c; color: #473009; font-size: 1.22rem; margin-right: .2rem; }
 
 main { padding-block: 25px 22px; }
