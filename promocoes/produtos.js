@@ -19,7 +19,7 @@ export function normalizar(texto) {
 }
 
 export async function lerCatalogo(marca) {
-  const resposta = await fetch(new URL(`./dados/${marca}.json?v=3`, import.meta.url));
+  const resposta = await fetch(new URL(`./dados/${marca}.json?v=4`, import.meta.url));
   if (!resposta.ok) throw new Error('Catálogo indisponível.');
   return resposta.json();
 }

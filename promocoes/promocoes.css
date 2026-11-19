@@ -172,7 +172,8 @@ dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
 .pedido-complementos { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: .56rem; }
 .pedido-estoque { display: flex; flex-wrap: wrap; gap: .22rem .5rem; margin: .85rem 0; color: var(--muted); font-size: .86rem; }
 .pedido-estoque a { color: var(--acento); text-underline-offset: .18em; }
-.pedido-form .estoque-filtro { margin: -.3rem 0 .48rem; }
+.pedido-filtros { display: grid; justify-items: start; margin: -.3rem 0 .6rem; }
+.pedido-filtros .estoque-filtro { margin-top: 0; }
 .pedido-enviar { width: 100%; }
 .pedido-resultados { background: linear-gradient(168deg, #f7ecf0, #f9f3ef 27rem); }
 .pedido-resultados > h3 { font: 650 clamp(1.44rem, 3vw, 2rem)/1.12 var(--titulo); letter-spacing: -.022em; margin-bottom: .72rem; }
@@ -201,7 +202,10 @@ dialog textarea { padding: .7rem; resize: vertical; line-height: 1.45; }
 .rec-tipo-preco.preco-promocional { color: #843157; }
 .rec-textos { display: grid; gap: .72rem; margin-top: .82rem; }
 .rec-textos h5 { font-size: .95rem; margin-bottom: .14rem; }
-.rec-textos p { color: var(--muted); line-height: 1.48; }
+.rec-textos p, .rec-diferencial { color: var(--muted); line-height: 1.48; }
+.rec-diferencial { padding-inline-start: 1.15rem; }
+.rec-diferencial li + li { margin-top: .2rem; }
+.rec-fonte-pesquisa { display: inline-block; margin-top: .28rem; color: var(--acento); font-size: .84rem; text-underline-offset: .2em; }
 .rec-detalhes { margin-bottom: 0; }
 .rec-detalhes h5 { margin: .7rem 0 .2rem; font-size: .92rem; }
 .rec-mensagem { margin-top: .8rem; padding: .75rem; border: 1px solid #e6d5df; border-radius: 10px; background: #f7edf2; }

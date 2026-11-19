@@ -7,8 +7,8 @@
   <meta name="description" content="Explore as revistas de O Boticário e Eudora, encontre ofertas e abra as fichas de venda.">
   <title>Promoções | Estúdio Curinga</title>
   <link rel="icon" href="../icone.png" type="image/png">
-  <link rel="stylesheet" href="./promocoes.css?v=7">
-  <script src="./sugestao.js?v=3" type="module"></script>
+  <link rel="stylesheet" href="./promocoes.css?v=8">
+  <script src="./sugestao.js?v=4" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -80,7 +80,10 @@
           </div>
           <p class="pedido-ajuda">Multimarca busca um produto na outra revista.</p>
           <div class="pedido-estoque"><span id="pedido-estoque"></span> <a href="./catalogo.html?marca=boticario#estoque-titulo" target="_blank" rel="noopener">Gerenciar estoque</a></div>
-          <label id="pedido-estoque-filtro" class="estoque-filtro" hidden><input id="pedido-somente-estoque" type="checkbox" checked> Somente com estoque</label>
+          <div class="pedido-filtros">
+            <label id="pedido-estoque-filtro" class="estoque-filtro" hidden><input id="pedido-somente-estoque" type="checkbox" checked> Somente com estoque</label>
+            <label class="estoque-filtro"><input id="pedido-somente-encaixe" type="checkbox" checked> Somente com encaixe no pedido</label>
+          </div>
           <button class="acao pedido-enviar" type="submit">Ver opções de produtos</button>
           <p id="pedido-estado" class="pedido-ajuda" role="status"></p>
         </form>
@@ -117,8 +120,12 @@
         </div>
       </div>
       <div class="rec-textos">
-        <div><h5>Por que encaixa no pedido</h5><p class="rec-motivos"></p></div>
-        <div><h5>Diferencial do produto</h5><p class="rec-diferencial"></p></div>
+        <div><h5 class="rec-motivo-titulo">Por que encaixa no pedido</h5><p class="rec-motivos"></p></div>
+        <div>
+          <h5>Diferencial do produto</h5>
+          <ul class="rec-diferencial"></ul>
+          <a class="rec-fonte-pesquisa" target="_blank" rel="noopener" hidden></a>
+        </div>
       </div>
       <details class="ficha-secao rec-detalhes">
         <summary>Ver ficha e mensagem de venda</summary>

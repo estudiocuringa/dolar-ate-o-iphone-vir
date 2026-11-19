@@ -1,6 +1,6 @@
 import { chaveEstoque, criarConsultaDeEstoque, lerEstoque } from './estoque.js?v=1';
-import { copiarTexto, dadosDaFicha, lerCatalogo, marcas } from './produtos.js?v=2';
-import { interpretarPedido, montarAbordagem, nomesIndicadores, recomendarPedido } from './recomendacao.js?v=3';
+import { copiarTexto, dadosDaFicha, lerCatalogo, marcas } from './produtos.js?v=3';
+import { interpretarPedido, montarAbordagem, nomesIndicadores, recomendarPedido } from './recomendacao.js?v=4';
 import { reais } from './vendas.js?v=3';
 
 const obter = id => document.getElementById(id);
@@ -16,6 +16,7 @@ const seletorPagina = obter('pedido-pagina');
 const anterior = obter('pedido-anterior');
 const proxima = obter('pedido-proxima');
 const soComEstoque = obter('pedido-somente-estoque');
+const soComEncaixe = obter('pedido-somente-encaixe');
 const molde = obter('molde-recomendacao');
 const numeros = new Intl.NumberFormat('pt-BR');
 const porPagina = 8;
@@ -52,7 +53,7 @@ function atualizarEstoque() {
 }
 
 function montarCartao(recomendacao, indice) {
-  const { produto, saldo, cobre } = recomendacao;
+  const { produto, saldo, cobre, encaixe } = recomendacao;
   const abordagem = montarAbordagem(recomendacao);
   const cartao = molde.content.cloneNode(true);
   const selecionar = classe => cartao.querySelector(classe);
@@ -84,8 +85,21 @@ function montarCartao(recomendacao, indice) {
     Number.isFinite(saldo) ? `${numeros.format(saldo)} un. na planilha` : 'Estoque a confirmar',
     produto.edicao,
   ].join(' · ');
+  if (!encaixe) selecionar('.rec-motivo-titulo').textContent = 'O que confirmar para oferecer';
   selecionar('.rec-motivos').textContent = abordagem.motivos.join(' ');
-  selecionar('.rec-diferencial').textContent = abordagem.venda.diferencial;
+  const { fatos, fonte, rotuloFonte } = abordagem.diferencial;
+  const diferenciais = fatos.length ? fatos : ['Os detalhes desta versão estão na revista.'];
+  for (const fato of diferenciais) {
+    const item = document.createElement('li');
+    item.textContent = fato;
+    selecionar('.rec-diferencial').append(item);
+  }
+  if (fonte) {
+    const link = selecionar('.rec-fonte-pesquisa');
+    link.href = fonte;
+    link.textContent = rotuloFonte;
+    link.hidden = false;
+  }
   selecionar('.rec-roteiro').textContent = abordagem.venda.estrategia;
   selecionar('.rec-objecao').textContent = abordagem.objecao;
   for (const [rotulo, valor] of dadosDaFicha(produto)) {
@@ -183,6 +197,7 @@ formulario.addEventListener('submit', async evento => {
       produtos, pedido, indicadores, marcaInformada: obter('pedido-marca').value,
       limite: limiteDigitado ? Number(limiteDigitado) : null,
       somenteComEstoque: Boolean(estoque) && soComEstoque.checked,
+      somenteComEncaixe: soComEncaixe.checked,
       consultarSaldo: criarConsultaDeEstoque(estoque),
     });
     mostrarResultado(pedido, recomendacoes);
