@@ -28,21 +28,123 @@ button { cursor: pointer; }
 .navegacao .marca { display: grid; place-items: center; width: 35px; height: 35px; padding: 0; border-radius: 11px; background: #ffe17c; color: #473009; font-size: 1.22rem; margin-right: .2rem; }
 
 main { padding-block: 25px 22px; }
-.busca { position: relative; isolation: isolate; border: 1px solid #b5dcf3; border-radius: 26px; background: #d9f0ff; min-height: 255px; box-shadow: 0 7px 22px #36699112; }
-.busca::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(90deg, #e4f4ff 4%, #dcf1ff 35%, #dcf1ffe8 48%, #c8ecff55 75%),
-    radial-gradient(circle at 83% 20%, #fff6d5 0%, #fef6d4b0 7%, #ebf8ff40 27%, transparent 47%),
-    url("./ceu.jpg") 64% 48% / cover no-repeat;
+.busca {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, .82fr);
+  min-height: 271px;
+  border: 1px solid #b5dcf3;
+  border-radius: 26px;
+  background: linear-gradient(110deg, #e4f4ff, #d9effe);
+  box-shadow: 0 7px 22px #36699112;
 }
-.busca-conteudo { max-width: 620px; padding: 25px clamp(18px, 4.1vw, 43px) 30px; }
+.busca-conteudo { position: relative; z-index: 2; align-self: center; min-width: 0; padding: 25px clamp(18px, 4.1vw, 43px) 30px; }
 .busca h1 { font-size: clamp(2.4rem, 5.35vw, 4.2rem); line-height: 1; font-weight: 800; letter-spacing: -.066em; }
 .busca-conteudo > p { margin-top: .8rem; color: #324d6c; line-height: 1.45; }
+
+.visual-tempo { position: relative; display: grid; min-height: 205px; min-width: 0; align-items: end; --transicao-ceu: #dff2ff; }
+.cena-tempo {
+  --ceu-alto: #6bbcf0;
+  --ceu-baixo: #d5efff;
+  --nuvem: #f5fbff;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 0 25px 25px 0;
+  background: linear-gradient(160deg, var(--ceu-alto), var(--ceu-baixo));
+}
+.cena-tempo::before, .cena-tempo::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.cena-tempo::before { background: url("./ceu.jpg") center 58% / cover no-repeat; opacity: .26; mix-blend-mode: soft-light; }
+.cena-tempo::after { z-index: 5; background: linear-gradient(90deg, var(--transicao-ceu), transparent 29%); }
+.busca[data-cena="nublado"] .cena-tempo { --ceu-alto: #82aac3; --ceu-baixo: #d4e4f0; }
+.busca[data-cena="chuva"] .cena-tempo { --ceu-alto: #577fa2; --ceu-baixo: #bdd8e9; --nuvem: #d5e9f7; }
+.busca[data-cena="tempestade"] .cena-tempo { --ceu-alto: #253652; --ceu-baixo: #7890b2; --nuvem: #a9bed6; }
+.busca[data-cena="nevoeiro"] .cena-tempo { --ceu-alto: #9daebb; --ceu-baixo: #ecf3f8; --nuvem: #e5eff5; }
+.busca[data-cena="neve"] .cena-tempo { --ceu-alto: #627b9f; --ceu-baixo: #dbeaf8; --nuvem: #eef6ff; }
+
+.cena-barra { position: relative; display: flex; flex-wrap: wrap; align-items: end; justify-content: end; gap: .4rem; padding: .75rem .9rem; pointer-events: none; }
+.cena-legenda, .botao-cena { border: 1px solid #c6e0ef; border-radius: .65rem; padding: .44rem .62rem; min-height: 36px; background: #f7fcfff2; color: #183c5c; font-size: .875rem; font-weight: 650; }
+.cena-legenda { display: flex; align-items: center; }
+.botao-cena { pointer-events: auto; }
+.botao-cena:hover { background: #e4f3ff; }
+
+.cena-sol {
+  position: absolute;
+  left: 55%;
+  top: 24%;
+  width: clamp(67px, 10vw, 105px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle at 39% 35%, #fff8c0, #ffdf71 65%, #ffc24d);
+  box-shadow: 0 0 30px 15px #ffe9a774, 0 0 75px #ffe0a6be;
+  transition: opacity .45s;
+}
+.cena-sol::before {
+  content: "";
+  position: absolute;
+  inset: -46%;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#fff2b2bb 0 5deg, transparent 11deg 30deg);
+  mask-image: radial-gradient(circle, transparent 36%, black 44%, transparent 69%);
+  animation: girar-sol 30s linear infinite paused;
+}
+.busca:is([data-cena="sol"], [data-cena="sol-nuvens"]) .cena-sol { opacity: 1; }
+.busca:is([data-cena="sol"], [data-cena="sol-nuvens"]) .cena-sol::before { animation-play-state: running; }
+
+.cena-nuvem {
+  position: absolute;
+  z-index: 3;
+  width: clamp(108px, 47%, 212px);
+  height: 20%;
+  min-height: 30px;
+  border-radius: 100vw;
+  background: var(--nuvem);
+  filter: drop-shadow(0 7px 9px #2b506e35);
+  animation: mover-nuvem 8s ease-in-out infinite alternate;
+  transition: opacity .45s;
+}
+.cena-nuvem::before, .cena-nuvem::after { content: ""; position: absolute; border-radius: 50%; aspect-ratio: 1; background: inherit; }
+.cena-nuvem::before { width: 44%; left: 15%; bottom: 39%; }
+.cena-nuvem::after { width: 37%; right: 14%; bottom: 22%; }
+.nuvem-frente { left: 23%; top: 44%; }
+.nuvem-fundo { left: 56%; top: 35%; opacity: .67; scale: .75; animation-delay: -3s; animation-direction: alternate-reverse; }
+.busca[data-cena="sol"] .nuvem-frente { top: 62%; left: 20%; opacity: .52; scale: .68; }
+.busca[data-cena="sol"] .nuvem-fundo { opacity: .15; }
+.busca[data-cena="nevoeiro"] .nuvem-frente { filter: blur(6px); scale: 1.15; opacity: .75; }
+.busca[data-cena="neutro"] .cena-nuvem { animation-play-state: paused; }
+
+.cena-gotas { position: absolute; z-index: 1; inset: 47% 20% 0 25%; transform: skewX(-13deg); opacity: 0; }
+.cena-gotas i { position: absolute; left: var(--x); top: 18%; width: 2px; height: 22px; border-radius: 999px; background: linear-gradient(transparent, #ecfaff 72%); animation: cair-gota 1.25s var(--atraso) linear infinite paused; }
+.cena-gotas i:nth-child(3n + 2) { top: 35%; }
+.cena-gotas i:nth-child(3n + 3) { top: 52%; }
+.busca:is([data-cena="chuva"], [data-cena="tempestade"], [data-cena="neve"]) .cena-gotas { opacity: 1; }
+.busca:is([data-cena="chuva"], [data-cena="tempestade"], [data-cena="neve"]) .cena-gotas i { animation-play-state: running; }
+.busca[data-cena="tempestade"] .cena-gotas i { animation-duration: .92s; }
+.busca[data-cena="neve"] .cena-gotas { transform: none; }
+.busca[data-cena="neve"] .cena-gotas i { width: 5px; height: 5px; background: white; animation-duration: 2.4s; }
+
+.cena-raio { position: absolute; z-index: 2; left: 53%; top: 52%; width: 41px; height: 72px; background: #ffe5a3; clip-path: polygon(44% 0, 90% 0, 59% 39%, 100% 39%, 5% 100%, 42% 54%, 10% 54%); opacity: 0; }
+.busca[data-cena="tempestade"] .cena-raio { opacity: .84; animation: iluminar-raio 5s ease-in-out infinite; }
+.busca[data-pausado] .cena-tempo :is(.cena-nuvem, .cena-raio, .cena-gotas i) { animation-play-state: paused; }
+.busca[data-pausado] .cena-sol::before { animation-play-state: paused; }
+
+@keyframes girar-sol { to { transform: rotate(1turn); } }
+@keyframes mover-nuvem { from { transform: translateX(-9px); } to { transform: translate(13px, -4px); } }
+@keyframes cair-gota {
+  0% { transform: translateY(-38px); opacity: 0; }
+  23%, 75% { opacity: .95; }
+  100% { transform: translateY(87px); opacity: 0; }
+}
+@keyframes iluminar-raio { 0%, 55%, 100% { opacity: .43; } 73%, 81% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cena-nuvem, .cena-sol::before, .cena-raio, .cena-gotas i { animation: none !important; transition: none; }
+  .cena-sol { transition: none; }
+  .botao-cena { display: none; }
+}
 
 .form-cidade { margin-top: 1.4rem; position: relative; }
 .form-cidade label { display: block; font-size: .9375rem; font-weight: 700; margin-bottom: .4rem; }
@@ -97,6 +199,17 @@ main { padding-block: 25px 22px; }
 @media (max-width: 820px) {
   .dias { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+@media (max-width: 675px) {
+  .busca { grid-template-columns: 1fr; }
+  .busca-conteudo { padding-bottom: 14px; }
+  .visual-tempo { min-height: 170px; }
+  .cena-tempo { border-radius: 0 0 25px 25px; }
+  .cena-tempo::after { background: linear-gradient(180deg, var(--transicao-ceu), transparent 30%); }
+  .cena-nuvem { width: min(39%, 165px); }
+  .nuvem-frente { left: 27%; }
+  .nuvem-fundo { left: 56%; }
+  .cena-raio { width: 32px; height: 52px; }
+}
 @media (max-width: 550px) {
   .limite { width: calc(100% - 1.5rem); }
   main { padding-top: 14px; }
@@ -104,8 +217,9 @@ main { padding-block: 25px 22px; }
   .navegacao .marca { width: 31px; height: 31px; margin-right: 0; font-size: 1.07rem; }
   .navegacao a { font-size: .875rem; }
   .busca { min-height: 0; border-radius: 19px; }
-  .busca::before { background-position: 80% 60%; }
-  .busca-conteudo { padding-block: 22px; }
+  .busca-conteudo { padding-top: 22px; }
+  .cena-tempo { border-radius: 0 0 18px 18px; }
+  .cena-barra { padding-inline: .6rem; }
   .condicoes { padding: .8rem; }
   .medidas { width: 100%; }
   .medidas div { flex: 1; }

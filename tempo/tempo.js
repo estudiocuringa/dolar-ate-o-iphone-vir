@@ -10,6 +10,9 @@ const condicoes = obter('condicoes');
 const semana = obter('semana');
 const dataAtual = obter('data-atual');
 const moldeDia = obter('molde-dia');
+const buscaTempo = obter('busca-tempo');
+const cenaLegenda = obter('cena-legenda');
+const pausarCena = obter('pausar-cena');
 
 const INTERVALO = 15 * 60_000;
 const MUNICIPIO_INICIAL = { id: 3550308, nome: 'São Paulo', uf: 'SP', lat: -23.5548, lon: -46.579 };
@@ -23,34 +26,34 @@ const ESTADOS = {
 };
 
 const TEMPO = {
-  0: ['☀️', 'Céu limpo'],
-  1: ['🌤️', 'Poucas nuvens'],
-  2: ['⛅', 'Parcialmente nublado'],
-  3: ['☁️', 'Encoberto'],
-  45: ['🌫️', 'Nevoeiro'],
-  48: ['🌫️', 'Nevoeiro com geada'],
-  51: ['🌦️', 'Garoa fraca'],
-  53: ['🌦️', 'Garoa moderada'],
-  55: ['🌧️', 'Garoa intensa'],
-  56: ['🌧️', 'Garoa congelante'],
-  57: ['🌧️', 'Garoa congelante intensa'],
-  61: ['🌦️', 'Chuva fraca'],
-  63: ['🌧️', 'Chuva moderada'],
-  65: ['🌧️', 'Chuva forte'],
-  66: ['🌧️', 'Chuva congelante'],
-  67: ['🌧️', 'Chuva congelante forte'],
-  71: ['🌨️', 'Neve fraca'],
-  73: ['🌨️', 'Neve moderada'],
-  75: ['🌨️', 'Neve forte'],
-  77: ['🌨️', 'Grãos de neve'],
-  80: ['🌦️', 'Pancadas fracas'],
-  81: ['🌧️', 'Pancadas moderadas'],
-  82: ['🌧️', 'Pancadas fortes'],
-  85: ['🌨️', 'Pancadas de neve fracas'],
-  86: ['🌨️', 'Pancadas de neve fortes'],
-  95: ['⛈️', 'Trovoadas'],
-  96: ['⛈️', 'Trovoadas com granizo'],
-  99: ['⛈️', 'Trovoadas com granizo forte'],
+  0: ['☀️', 'Céu limpo', 'sol'],
+  1: ['🌤️', 'Poucas nuvens', 'sol-nuvens'],
+  2: ['⛅', 'Parcialmente nublado', 'sol-nuvens'],
+  3: ['☁️', 'Encoberto', 'nublado'],
+  45: ['🌫️', 'Nevoeiro', 'nevoeiro'],
+  48: ['🌫️', 'Nevoeiro com geada', 'nevoeiro'],
+  51: ['🌦️', 'Garoa fraca', 'chuva'],
+  53: ['🌦️', 'Garoa moderada', 'chuva'],
+  55: ['🌧️', 'Garoa intensa', 'chuva'],
+  56: ['🌧️', 'Garoa congelante', 'chuva'],
+  57: ['🌧️', 'Garoa congelante intensa', 'chuva'],
+  61: ['🌦️', 'Chuva fraca', 'chuva'],
+  63: ['🌧️', 'Chuva moderada', 'chuva'],
+  65: ['🌧️', 'Chuva forte', 'chuva'],
+  66: ['🌧️', 'Chuva congelante', 'chuva'],
+  67: ['🌧️', 'Chuva congelante forte', 'chuva'],
+  71: ['🌨️', 'Neve fraca', 'neve'],
+  73: ['🌨️', 'Neve moderada', 'neve'],
+  75: ['🌨️', 'Neve forte', 'neve'],
+  77: ['🌨️', 'Grãos de neve', 'neve'],
+  80: ['🌦️', 'Pancadas fracas', 'chuva'],
+  81: ['🌧️', 'Pancadas moderadas', 'chuva'],
+  82: ['🌧️', 'Pancadas fortes', 'chuva'],
+  85: ['🌨️', 'Pancadas de neve fracas', 'neve'],
+  86: ['🌨️', 'Pancadas de neve fortes', 'neve'],
+  95: ['⛈️', 'Trovoadas', 'tempestade'],
+  96: ['⛈️', 'Trovoadas com granizo', 'tempestade'],
+  99: ['⛈️', 'Trovoadas com granizo forte', 'tempestade'],
 };
 
 const formatoDia = new Intl.DateTimeFormat('pt-BR', {
@@ -165,6 +168,7 @@ function abrirPrevisao(municipio) {
   municipioSelecionado = municipio;
   obter('municipio').textContent = nomeCompleto(municipio);
   condicoes.hidden = semana.hidden = dataAtual.hidden = true;
+  atualizarCena();
   cidades.replaceChildren();
   consultar();
 }
@@ -173,6 +177,13 @@ function dadosDoTempo(codigo, noite = false) {
   if (noite && codigo === 0) return ['🌙', 'Céu limpo'];
   if (noite && codigo === 1) return ['🌙', 'Poucas nuvens'];
   return TEMPO[codigo] ?? ['🌡️', 'Condição indisponível'];
+}
+
+function atualizarCena(codigo) {
+  const [, descricao, cena = 'neutro'] = dadosDoTempo(codigo);
+  buscaTempo.dataset.cena = cena;
+  cenaLegenda.hidden = pausarCena.hidden = cena === 'neutro';
+  if (cena !== 'neutro') cenaLegenda.textContent = `Hoje · ${descricao}`;
 }
 
 function medida(n, unidade) {
@@ -213,6 +224,8 @@ function exibirPrevisao({ current, daily }) {
     dias.append(dia);
   });
   obter('dias').replaceChildren(dias);
+  const hoje = daily.time.indexOf(current.time.slice(0, 10));
+  atualizarCena(daily.weather_code?.[hoje]);
   condicoes.hidden = semana.hidden = dataAtual.hidden = false;
 }
 
@@ -297,6 +310,10 @@ document.addEventListener('click', (evento) => {
 document.addEventListener('visibilitychange', atualizarSeNecessario);
 botaoAtualizar.addEventListener('click', () => {
   if (municipioSelecionado && !requisicao) consultar();
+});
+pausarCena.addEventListener('click', () => {
+  const pausado = buscaTempo.toggleAttribute('data-pausado');
+  pausarCena.textContent = pausado ? 'Retomar animação' : 'Pausar animação';
 });
 setInterval(atualizarSeNecessario, 60_000);
 iniciar();
