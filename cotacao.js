@@ -1,4 +1,9 @@
-const api = 'https://economia.awesomeapi.com.br/json';
+const apiPrincipal = 'https://biquote.io/api/USDBRL';
+const apiReserva = 'https://economia.awesomeapi.com.br/json';
+const fontes = {
+  biquote: { nome: 'biquote', link: 'https://biquote.io/docs/' },
+  awesome: { nome: 'AwesomeAPI', link: 'https://docs.awesomeapi.com.br/api-de-moedas' },
+};
 const minuto = 60_000;
 const dia = 86_400_000;
 const fuso = 'America/Sao_Paulo';
@@ -17,13 +22,13 @@ const formatarVariacao = new Intl.NumberFormat('pt-BR', {
   style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'exceptZero',
 });
 const formatarHorario = new Intl.DateTimeFormat('pt-BR', {
-  timeZone: fuso, dateStyle: 'short', timeStyle: 'short',
+  timeZone: fuso, dateStyle: 'short', timeStyle: 'medium',
 });
 const formatarDia = new Intl.DateTimeFormat('pt-BR', {
-  timeZone: fuso, day: '2-digit', month: '2-digit', year: 'numeric',
+  timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric',
 });
 const formatarEixo = new Intl.DateTimeFormat('pt-BR', {
-  timeZone: fuso, day: '2-digit', month: '2-digit',
+  timeZone: 'UTC', day: '2-digit', month: '2-digit',
 });
 const chaveDia = new Intl.DateTimeFormat('en-CA', {
   timeZone: fuso, year: 'numeric', month: '2-digit', day: '2-digit',
@@ -36,6 +41,11 @@ const grafico = obter('grafico');
 const area = obter('grafico-area');
 const detalhe = obter('grafico-detalhe');
 const contexto = grafico.getContext('2d');
+const signalR = globalThis.signalR;
+const conexao = signalR && new signalR.HubConnectionBuilder()
+  .withUrl('https://biquote.io/hubs/tick', { withCredentials: false })
+  .withAutomaticReconnect()
+  .build();
 
 let cotacao = null;
 let historico = [];
@@ -47,6 +57,7 @@ let ultimaConsultaHistorico = 0;
 let pontosVisiveis = [];
 let pontosDesenhados = [];
 let indiceDetalhe = -1;
+let ultimoTickRecebido = 0;
 
 function numero(valor) {
   if (typeof valor === 'number' || (typeof valor === 'string' && valor.trim())) {
@@ -56,18 +67,22 @@ function numero(valor) {
   return null;
 }
 
-function lerPonto(dado) {
-  const preco = numero(dado?.bid);
-  const instante = numero(dado?.timestamp) * 1000;
-  if (!(preco > 0) || instante <= 0 || instante > Date.now() + minuto * 5) return null;
+function lerPonto(precoBruto, instante) {
+  const preco = numero(precoBruto);
+  if (!(preco > 0) || !(instante > 0 && instante <= Date.now() + minuto * 5)) return null;
   return { preco, instante };
 }
 
-function lerCotacao(dado) {
-  const ponto = lerPonto(dado);
+function diaEmBrasilia(instante) {
+  return Date.parse(chaveDia.format(instante) + 'T00:00:00Z');
+}
+
+function lerCotacaoReserva(dado) {
+  const ponto = lerPonto(dado?.bid, numero(dado?.timestamp) * 1000);
   if (!ponto) return null;
   return {
     ...ponto,
+    fonte: 'awesome',
     minima: numero(dado.low),
     maxima: numero(dado.high),
     venda: numero(dado.ask),
@@ -75,14 +90,35 @@ function lerCotacao(dado) {
   };
 }
 
+function lerCotacaoPrincipal(dado) {
+  if (dado?.symbol !== 'USDBRL') return null;
+  const ponto = lerPonto(dado.mid, Date.parse(dado.timestamp));
+  if (!ponto) return null;
+  return {
+    ...ponto,
+    fonte: 'biquote',
+    minima: numero(dado.low),
+    maxima: numero(dado.high),
+    venda: numero(dado.ask),
+    variacao: numero(dado.dayDiffPercent),
+    mercadoFechado: dado.marketState === 'closed',
+  };
+}
+
 function lerCache() {
   try {
     const salvo = JSON.parse(localStorage.getItem(chaveCache));
-    if (!salvo || Date.now() - Number(salvo.instante) > 7 * dia) return null;
-    return lerCotacao({
-      bid: salvo.preco, timestamp: salvo.instante / 1000, low: salvo.minima,
-      high: salvo.maxima, ask: salvo.venda, pctChange: salvo.variacao,
-    });
+    const ponto = lerPonto(salvo?.preco, numero(salvo?.instante));
+    if (!ponto || Date.now() - ponto.instante > 7 * dia) return null;
+    return {
+      ...ponto,
+      fonte: salvo.fonte === 'biquote' ? 'biquote' : 'awesome',
+      minima: numero(salvo.minima),
+      maxima: numero(salvo.maxima),
+      venda: numero(salvo.venda),
+      variacao: numero(salvo.variacao),
+      mercadoFechado: salvo.mercadoFechado === true,
+    };
   } catch {
     return null;
   }
@@ -109,13 +145,21 @@ function exibirCotacao() {
   }
 
   const variacao = obter('variacao');
-  variacao.textContent = cotacao.variacao === null ? '—' : formatarVariacao.format(cotacao.variacao / 100);
-  variacao.dataset.sinal = cotacao.variacao > 0 ? 'positivo' : cotacao.variacao < 0 ? 'negativo' : 'neutro';
+  variacao.textContent = cotacao.mercadoFechado || cotacao.variacao === null
+    ? '—' : formatarVariacao.format(cotacao.variacao / 100);
+  variacao.dataset.sinal = cotacao.mercadoFechado ? 'neutro'
+    : cotacao.variacao > 0 ? 'positivo' : cotacao.variacao < 0 ? 'negativo' : 'neutro';
 
   const horario = document.createElement('time');
   horario.dateTime = new Date(cotacao.instante).toISOString();
   horario.textContent = formatarHorario.format(cotacao.instante);
   obter('horario').replaceChildren('Cotação de ', horario, ' · horário de Brasília');
+  const fonte = obter('fonte-cotacao');
+  fonte.textContent = fontes[cotacao.fonte].nome;
+  fonte.href = fontes[cotacao.fonte].link;
+  obter('info-fonte-cotacao').hidden = false;
+  obter('tipo-cotacao').textContent = cotacao.fonte === 'biquote'
+    ? 'Dólar comercial · taxa de referência' : 'Dólar comercial · cotação de compra';
   calcular();
 }
 
@@ -142,16 +186,10 @@ function calcular() {
 }
 
 function agruparPontos() {
-  const porDia = new Map();
-  for (const ponto of cotacao ? [...historico, cotacao] : historico) {
-    const data = chaveDia.format(ponto.instante);
-    if (!porDia.has(data) || porDia.get(data).instante <= ponto.instante) {
-      porDia.set(data, { ...ponto, dia: Date.parse(data + 'T00:00:00Z') / dia });
-    }
-  }
+  const porDia = new Map(historico.map((ponto) => [ponto.dia, ponto]));
   const ordenados = [...porDia.values()].sort((a, b) => a.dia - b.dia);
   const ultimo = ordenados.at(-1)?.dia;
-  return ordenados.filter((ponto) => ponto.dia >= ultimo - periodo + 1);
+  return ordenados.filter((ponto) => ponto.dia >= ultimo - (periodo - 1) * dia);
 }
 
 function exibirHistorico() {
@@ -167,7 +205,7 @@ function exibirHistorico() {
   const tabela = document.createDocumentFragment();
   for (const ponto of [...pontosVisiveis].reverse()) {
     const linha = document.createElement('tr');
-    linha.insertCell().textContent = formatarDia.format(ponto.instante);
+    linha.insertCell().textContent = formatarDia.format(ponto.dia);
     linha.insertCell().textContent = formatarMoeda.format(ponto.preco);
     tabela.append(linha);
   }
@@ -175,7 +213,7 @@ function exibirHistorico() {
   if (pontosVisiveis.length) {
     const primeiro = pontosVisiveis[0];
     const ultimo = pontosVisiveis.at(-1);
-    grafico.setAttribute('aria-label', `Histórico de ${formatarDia.format(primeiro.instante)} a ${formatarDia.format(ultimo.instante)}. Último valor: ${formatarMoeda.format(ultimo.preco)}. Consulte a tabela para ver os valores por data.`);
+    grafico.setAttribute('aria-label', `Histórico de ${formatarDia.format(primeiro.dia)} a ${formatarDia.format(ultimo.dia)}. Último valor: ${formatarMoeda.format(ultimo.preco)}. Consulte a tabela para ver os valores por data.`);
   }
   esconderDetalhe();
 }
@@ -237,11 +275,11 @@ function desenharGrafico() {
   contexto.textAlign = 'center';
   if (marcas === 0) {
     const ponto = pontosDesenhados[0];
-    contexto.fillText(formatarEixo.format(ponto.instante), ponto.x, base + 17);
+    contexto.fillText(formatarEixo.format(ponto.dia), ponto.x, base + 17);
   }
   for (let i = 0; i <= marcas && marcas > 0; i++) {
     const ponto = pontosDesenhados[Math.round(i * indiceUltimo / marcas)];
-    contexto.fillText(formatarEixo.format(ponto.instante), ponto.x, base + 17);
+    contexto.fillText(formatarEixo.format(ponto.dia), ponto.x, base + 17);
   }
 
   const primeiro = pontosDesenhados[0];
@@ -296,7 +334,7 @@ function mostrarDetalhe(evento) {
   indiceDetalhe = pontosDesenhados.reduce((melhor, ponto, i) =>
     Math.abs(ponto.x - x) < Math.abs(pontosDesenhados[melhor].x - x) ? i : melhor, 0);
   const ponto = pontosDesenhados[indiceDetalhe];
-  obter('detalhe-data').textContent = formatarDia.format(ponto.instante);
+  obter('detalhe-data').textContent = formatarDia.format(ponto.dia);
   obter('detalhe-valor').textContent = formatarMoeda.format(ponto.preco);
   detalhe.hidden = false;
   const espaco = area.clientWidth - detalhe.offsetWidth;
@@ -304,66 +342,144 @@ function mostrarDetalhe(evento) {
   desenharGrafico();
 }
 
-async function consultar(sufixo) {
-  const resposta = await fetch(`${api}/${sufixo}`, {
-    signal: AbortSignal.timeout(10_000), cache: 'no-cache',
+async function consultar(url) {
+  const resposta = await fetch(url, {
+    signal: AbortSignal.timeout(6000), cache: 'no-cache', credentials: 'omit',
   });
   if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
   return resposta.json();
 }
 
+function fluxoRecente() {
+  return conexao && conexao.state === signalR.HubConnectionState.Connected
+    && Date.now() - ultimoTickRecebido < 2 * minuto;
+}
+
+function mostrarEstadoCotacao() {
+  if (cotacao.mercadoFechado) {
+    mostrarEstado('Mercado fechado', 'anterior');
+  } else if (Date.now() - cotacao.instante >= 5 * minuto) {
+    mostrarEstado('Última disponível', 'anterior');
+  } else {
+    mostrarEstado(fluxoRecente() && cotacao.fonte === 'biquote' ? 'Atualização ao vivo' : 'Cotação recente', 'recente');
+  }
+}
+
+function exibirNovaCotacao(nova) {
+  if (!cotacao || nova.instante >= cotacao.instante) {
+    const precoMudou = cotacao && formatarPreco.format(nova.preco) !== formatarPreco.format(cotacao.preco);
+    cotacao = nova;
+    salvarCache();
+    exibirCotacao();
+    if (precoMudou) {
+      const preco = obter('preco');
+      preco.classList.remove('nova-cotacao');
+      requestAnimationFrame(() => preco.classList.add('nova-cotacao'));
+    }
+  }
+  mostrarEstadoCotacao();
+}
+
+async function assinarCotacao() {
+  try {
+    await conexao.invoke('Subscribe', ['USDBRL']);
+  } catch {
+    await conexao.stop();
+  }
+}
+
+async function iniciarFluxo() {
+  if (!conexao || conexao.state !== signalR.HubConnectionState.Disconnected) return;
+  try {
+    await conexao.start();
+    await assinarCotacao();
+  } catch {
+    // A atualização por consulta continua disponível durante falhas na conexão.
+  }
+}
+
+conexao?.on('ReceiveTick', (dado) => {
+  const nova = lerCotacaoPrincipal(dado);
+  if (!nova || document.hidden) return;
+  ultimoTickRecebido = Date.now();
+  exibirNovaCotacao(nova);
+});
+conexao?.onreconnected(assinarCotacao);
+conexao?.onreconnecting(() => {
+  ultimoTickRecebido = 0;
+  if (cotacao) mostrarEstadoCotacao();
+});
+
 async function atualizarCotacao() {
   try {
-    const dados = await consultar('last/USD-BRL');
-    const nova = lerCotacao(dados?.USDBRL);
-    if (!nova) throw new Error('Cotação ausente ou inválida.');
-    if (!cotacao || nova.instante >= cotacao.instante) {
-      const precoMudou = cotacao && nova.preco !== cotacao.preco;
-      const mudou = !cotacao || nova.preco !== cotacao.preco || nova.instante !== cotacao.instante;
-      cotacao = nova;
-      salvarCache();
-      exibirCotacao();
-      if (precoMudou) {
-        const preco = obter('preco');
-        preco.classList.remove('nova-cotacao');
-        requestAnimationFrame(() => preco.classList.add('nova-cotacao'));
-      }
-      if (mudou && historico.length) exibirHistorico();
-    }
-    const recente = Date.now() - cotacao.instante < 15 * minuto;
-    mostrarEstado(recente ? 'Cotação recente' : 'Última disponível', recente ? 'recente' : 'anterior');
+    const nova = lerCotacaoPrincipal(await consultar(apiPrincipal));
+    if (!nova) throw new Error('Cotação inválida.');
+    exibirNovaCotacao(nova);
+    return;
   } catch {
+    if (fluxoRecente()) return;
+  }
+
+  try {
+    const dados = await consultar(`${apiReserva}/last/USD-BRL`);
+    const nova = lerCotacaoReserva(dados?.USDBRL);
+    if (!nova) throw new Error('Cotação inválida.');
+    if (!fluxoRecente()) exibirNovaCotacao(nova);
+  } catch {
+    if (fluxoRecente()) return;
     mostrarEstado(cotacao ? 'Falha ao atualizar' : 'Cotação indisponível', 'erro');
     if (!cotacao) obter('horario').textContent = 'Tente atualizar novamente em instantes.';
   }
 }
 
+function exibirDadosHistoricos(pontos, fonte) {
+  if (!pontos.length) throw new Error('Histórico vazio.');
+  historico = pontos.sort((a, b) => a.instante - b.instante);
+  obter('historico-subtitulo').textContent = fonte === 'biquote'
+    ? 'Taxa de referência em reais por dólar · biquote'
+    : 'Cotação de compra em reais por dólar · AwesomeAPI';
+  obter('historico-valor').textContent = fonte === 'biquote' ? 'Referência' : 'Compra';
+  exibirHistorico();
+}
+
 async function atualizarHistorico() {
   ultimaConsultaHistorico = Date.now();
   try {
-    const dados = await consultar('daily/USD-BRL/35');
-    if (!Array.isArray(dados)) throw new Error('Histórico inválido.');
-    const pontos = dados.map(lerPonto).filter(Boolean);
-    if (!pontos.length) throw new Error('Histórico vazio.');
-    historico = pontos;
-    exibirHistorico();
+    const dados = await consultar(`${apiPrincipal}/ohlc?interval=1d&limit=35`);
+    if (dados?.symbol !== 'USDBRL' || !Array.isArray(dados.bars)) throw new Error('Histórico inválido.');
+    const pontos = dados.bars.map((barra) => lerPonto(barra?.close, Date.parse(barra?.openTime))).filter(Boolean);
+    exibirDadosHistoricos(pontos.map((ponto) => ({ ...ponto, dia: Math.floor(ponto.instante / dia) * dia })), 'biquote');
+    return;
   } catch {
-    if (!historico.length) obter('grafico-estado').textContent = 'Histórico indisponível no momento.';
+    if (historico.length) return;
+  }
+  try {
+    const dados = await consultar(`${apiReserva}/daily/USD-BRL/35`);
+    if (!Array.isArray(dados)) throw new Error('Histórico inválido.');
+    const pontos = dados.map((item) => lerPonto(item?.bid, numero(item?.timestamp) * 1000)).filter(Boolean);
+    exibirDadosHistoricos(pontos.map((ponto) => ({ ...ponto, dia: diaEmBrasilia(ponto.instante) })), 'awesome');
+  } catch {
+    obter('grafico-estado').textContent = 'Histórico indisponível no momento.';
   }
 }
 
 async function atualizar(manual = false) {
   if (consultaEmAndamento) return;
+  void iniciarFluxo();
   consultaEmAndamento = true;
   ultimaConsulta = Date.now();
-  botaoAtualizar.setAttribute('aria-disabled', 'true');
-  obter('atualizar-texto').textContent = 'Consultando…';
-  if (!cotacao) mostrarEstado('Consultando', 'espera');
+  const consultarCotacao = manual || !fluxoRecente();
+  if (consultarCotacao) {
+    botaoAtualizar.setAttribute('aria-disabled', 'true');
+    obter('atualizar-texto').textContent = 'Consultando…';
+    if (!cotacao) mostrarEstado('Consultando', 'espera');
+  }
 
   try {
     const precisoConsultarHistorico = manual || Date.now() - ultimaConsultaHistorico >=
       (historico.length ? 15 * minuto : 2 * minuto);
-    const operacoes = [atualizarCotacao()];
+    const operacoes = consultarCotacao ? [atualizarCotacao()] : [];
+    if (!consultarCotacao && cotacao) mostrarEstadoCotacao();
     if (precisoConsultarHistorico) operacoes.push(atualizarHistorico());
     await Promise.all(operacoes);
   } finally {

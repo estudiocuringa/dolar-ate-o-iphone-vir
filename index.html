@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#240810">
   <title>Dolar até o Iphone vir | Cotação USD/BRL</title>
   <link rel="icon" href="./icone.png" type="image/png">
-  <link rel="stylesheet" href="./estilo.css?v=menu">
+  <link rel="stylesheet" href="./estilo.css?v=cotacao">
   <style>
     .estrela-celular {
       display: inline-grid;
@@ -35,7 +35,8 @@
       .estrela-celular { font-size: 2.45rem; }
     }
   </style>
-  <script src="./cotacao.js" type="module"></script>
+  <script src="./vendor/signalr/signalr-8.0.29.min.js" defer></script>
+  <script src="./cotacao.js?v=biquote" type="module"></script>
 </head>
 <body>
   <header class="topo">
@@ -92,7 +93,7 @@
             <div class="bandeiras" aria-hidden="true"><span>🇺🇸</span><span>🇧🇷</span></div>
             <div>
               <h2 id="cotacao-titulo">USD / BRL</h2>
-              <p>Dólar comercial · consulta a cada minuto</p>
+              <p id="tipo-cotacao">Dólar comercial · taxa de referência</p>
             </div>
           </div>
           <span id="estado" class="estado" data-tipo="espera" role="status">Consultando</span>
@@ -108,12 +109,16 @@
             <div><dt>Venda</dt><dd id="venda">—</dd></div>
           </dl>
           <p id="horario" class="horario">Aguardando o horário da cotação</p>
+          <p class="fontes-cotacao">
+            <span id="info-fonte-cotacao" hidden>Fonte <a id="fonte-cotacao" target="_blank" rel="noopener noreferrer"></a></span>
+            <a href="https://www.google.com/finance/quote/USD-BRL?hl=pt-BR" target="_blank" rel="noopener noreferrer">Comparar no Google Finanças</a>
+          </p>
         </div>
       </section>
 
       <section class="conversor cartao" aria-labelledby="conversor-titulo">
         <h2 id="conversor-titulo">Conversor</h2>
-        <p class="subtitulo">Calcule pela cotação comercial de compra.</p>
+        <p class="subtitulo">Calcule pela cotação exibida no painel.</p>
         <div class="campos">
           <div>
             <label for="quantia">Valor em <span id="de-nome">dólares</span></label>
@@ -139,7 +144,7 @@
       <div class="historico-topo">
         <div>
           <h2 id="historico-titulo">Histórico da cotação</h2>
-          <p class="subtitulo">Cotação de compra em reais por dólar</p>
+          <p id="historico-subtitulo" class="subtitulo">Valores diários em reais por dólar</p>
         </div>
         <div class="periodos" role="group" aria-label="Período do histórico">
           <button id="periodo-7" type="button" aria-pressed="true">7 dias</button>
@@ -147,7 +152,7 @@
         </div>
       </div>
       <div id="grafico-area" class="grafico-area">
-        <canvas id="grafico" hidden role="img" aria-label="Histórico da cotação de compra"></canvas>
+        <canvas id="grafico" hidden role="img" aria-label="Histórico da cotação do dólar"></canvas>
         <p id="grafico-estado" class="grafico-estado" role="status">Carregando histórico…</p>
         <div id="grafico-detalhe" class="grafico-detalhe" aria-hidden="true" hidden>
           <span id="detalhe-data"></span>
@@ -157,15 +162,14 @@
       <details id="registros" class="registros" hidden>
         <summary>Ver valores por data</summary>
         <table>
-          <thead><tr><th scope="col">Data</th><th scope="col">Compra</th></tr></thead>
+          <thead><tr><th scope="col">Data</th><th id="historico-valor" scope="col">Cotação</th></tr></thead>
           <tbody id="registros-lista"></tbody>
         </table>
       </details>
     </section>
 
     <footer class="rodape">
-      <p>Fonte dos dados <a href="https://docs.awesomeapi.com.br/api-de-moedas" target="_blank" rel="noopener noreferrer">AwesomeAPI</a></p>
-      <p>O horário e a frequência dos dados dependem da fonte.</p>
+      <p>Cotações indicativas. O horário e a frequência dependem da fonte.</p>
     </footer>
   </main>
 </body>
