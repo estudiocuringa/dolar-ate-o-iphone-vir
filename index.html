@@ -3,174 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Acompanhe o dólar comercial em reais, consulte o histórico e converta valores entre USD e BRL.">
-  <meta name="theme-color" content="#240810">
-  <title>Dolar até o Iphone vir | Cotação USD/BRL</title>
-  <link rel="icon" href="./icone.png" type="image/png">
-  <link rel="stylesheet" href="./estilo.css?v=cotacao">
+  <meta http-equiv="refresh" content="0;url=https://dolar-agora-cotacao-h5rlg.foldedmeringue8.chatgpt.site/">
+  <title>Dolar Hoje | Acesso</title>
   <style>
-    .estrela-celular {
-      display: inline-grid;
-      place-items: center;
-      font-size: clamp(3rem, 7.5vw, 6rem);
-      line-height: 1;
-      font-weight: 900;
-    }
-    .estrela-celular::before,
-    .estrela-celular strong {
-      grid-area: 1 / 1;
-    }
-    .estrela-celular::before {
-      content: "★";
-      color: #ffe27b;
-      text-shadow: 0 0 30px #ffc63a78;
-    }
-    .estrela-celular strong {
-      font-size: .28em;
-      font-weight: inherit;
-      color: #711429;
-      transform: translateY(.12em);
-    }
-    @media (max-width: 490px) {
-      .estrela-celular { font-size: 2.45rem; }
-    }
+    body { display: grid; min-height: 100dvh; margin: 0; place-items: center; background: #2a0d17; color: #fff7ee; font: 1rem/1.5 system-ui, sans-serif; }
+    main { width: min(100% - 2rem, 28rem); }
+    a { display: inline-block; padding: .65rem 1rem; border-radius: .6rem; color: #2a0d17; background: #ffdf68; font-weight: 700; }
   </style>
-  <script src="./vendor/signalr/signalr-8.0.29.min.js" defer></script>
-  <script src="./cotacao.js?v=biquote" type="module"></script>
 </head>
 <body>
-  <header class="topo">
-    <div class="limite topo-interno">
-      <nav class="navegacao" aria-label="Seções do site">
-        <a class="link-dolar" href="./" aria-current="page"><span class="marca-icone" aria-hidden="true">$</span>Dolar</a>
-        <a href="./tempo/">Previsão do tempo</a>
-        <a href="./promocoes/">Promoções</a>
-      </nav>
-      <button class="botao animacoes" id="animacoes" type="button">Pausar animações</button>
-    </div>
-  </header>
-
-  <main class="limite" id="inicio">
-    <section class="apresentacao" aria-labelledby="titulo-site">
-      <div class="estrelas" aria-hidden="true">
-        <span style="--x:47%;--y:11%;--s:20px;--a:19deg;--t:.3s">★</span>
-        <span style="--x:48%;--y:86%;--s:12px;--a:-11deg;--t:1.2s">★</span>
-        <span style="--x:58%;--y:25%;--s:24px;--a:14deg;--t:.8s">★</span>
-        <span style="--x:56%;--y:65%;--s:13px;--a:-17deg;--t:.4s">★</span>
-        <span style="--x:61%;--y:91%;--s:27px;--a:24deg;--t:1.4s">★</span>
-        <span style="--x:70%;--y:10%;--s:13px;--a:9deg;--t:.7s">★</span>
-        <span style="--x:73%;--y:81%;--s:17px;--a:-9deg;--t:1s">★</span>
-        <span style="--x:82%;--y:78%;--s:11px;--a:21deg;--t:.1s">★</span>
-        <span style="--x:88%;--y:17%;--s:29px;--a:-14deg;--t:.5s">★</span>
-        <span style="--x:93%;--y:41%;--s:16px;--a:25deg;--t:1.1s">★</span>
-        <span style="--x:94%;--y:78%;--s:25px;--a:11deg;--t:.1s">★</span>
-        <span style="--x:98%;--y:58%;--s:11px;--a:-3deg;--t:.9s">★</span>
-      </div>
-      <div class="apresentacao-texto">
-        <h1 id="titulo-site">Dolar <span>Hoje</span></h1>
-        <p>Ja fez o L hoje?</p>
-        <button class="botao atualizar" id="atualizar" type="button"><span id="atualizar-texto">Atualizar agora</span></button>
-      </div>
-      <figure class="apresentacao-foto">
-        <img src="./foto-banner.jpg" width="221" height="228" alt="Figurinha com a frase ‘fica com fome ai’." decoding="async">
-      </figure>
-      <div class="arte" aria-hidden="true">
-        <div class="orbita"></div>
-        <div class="celular">
-          <div class="tela">
-            <div class="estrela-celular"><strong>13</strong></div>
-          </div>
-        </div>
-        <div class="moeda moeda-usd">$</div>
-        <div class="moeda moeda-brl">R$</div>
-      </div>
-    </section>
-
-    <div class="painel">
-      <section id="cotacao" class="cotacao cartao" aria-labelledby="cotacao-titulo">
-        <div class="cotacao-topo">
-          <div class="par">
-            <div class="bandeiras" aria-hidden="true"><span>🇺🇸</span><span>🇧🇷</span></div>
-            <div>
-              <h2 id="cotacao-titulo">USD / BRL</h2>
-              <p id="tipo-cotacao">Dólar comercial · taxa de referência</p>
-            </div>
-          </div>
-          <span id="estado" class="estado" data-tipo="espera" role="status">Consultando</span>
-        </div>
-        <div class="cotacao-valor">
-          <p class="valor-principal"><span class="moeda-principal">R$</span> <strong id="preco">—</strong></p>
-          <p class="movimento"><span class="variacao" id="variacao">—</span><span>Variação do dia</span></p>
-        </div>
-        <div class="cotacao-rodape">
-          <dl class="metricas">
-            <div><dt>Mínima do dia</dt><dd id="minima">—</dd></div>
-            <div><dt>Máxima do dia</dt><dd id="maxima">—</dd></div>
-            <div><dt>Venda</dt><dd id="venda">—</dd></div>
-          </dl>
-          <p id="horario" class="horario">Aguardando o horário da cotação</p>
-          <p class="fontes-cotacao">
-            <span id="info-fonte-cotacao" hidden>Fonte <a id="fonte-cotacao" target="_blank" rel="noopener noreferrer"></a></span>
-            <a href="https://www.google.com/finance/quote/USD-BRL?hl=pt-BR" target="_blank" rel="noopener noreferrer">Comparar no Google Finanças</a>
-          </p>
-        </div>
-      </section>
-
-      <section class="conversor cartao" aria-labelledby="conversor-titulo">
-        <h2 id="conversor-titulo">Conversor</h2>
-        <p class="subtitulo">Calcule pela cotação exibida no painel.</p>
-        <div class="campos">
-          <div>
-            <label for="quantia">Valor em <span id="de-nome">dólares</span></label>
-            <div class="campo">
-              <input id="quantia" type="text" inputmode="decimal" value="100" maxlength="18" autocomplete="off" aria-describedby="conversor-nota">
-              <span class="codigo" aria-hidden="true" id="de-codigo">USD</span>
-            </div>
-          </div>
-          <button type="button" id="inverter" class="botao inverter">Inverter moedas</button>
-          <div>
-            <label for="convertido">Valor em <span id="para-nome">reais</span></label>
-            <div class="campo resultado">
-              <output id="convertido" for="quantia">—</output>
-              <span class="codigo" aria-hidden="true" id="para-codigo">BRL</span>
-            </div>
-          </div>
-        </div>
-        <p class="nota" id="conversor-nota">Estimativa sem impostos ou tarifas.</p>
-      </section>
-    </div>
-
-    <section id="historico" class="historico cartao" aria-labelledby="historico-titulo">
-      <div class="historico-topo">
-        <div>
-          <h2 id="historico-titulo">Histórico da cotação</h2>
-          <p id="historico-subtitulo" class="subtitulo">Valores diários em reais por dólar</p>
-        </div>
-        <div class="periodos" role="group" aria-label="Período do histórico">
-          <button id="periodo-7" type="button" aria-pressed="true">7 dias</button>
-          <button id="periodo-30" type="button" aria-pressed="false">30 dias</button>
-        </div>
-      </div>
-      <div id="grafico-area" class="grafico-area">
-        <canvas id="grafico" hidden role="img" aria-label="Histórico da cotação do dólar"></canvas>
-        <p id="grafico-estado" class="grafico-estado" role="status">Carregando histórico…</p>
-        <div id="grafico-detalhe" class="grafico-detalhe" aria-hidden="true" hidden>
-          <span id="detalhe-data"></span>
-          <strong id="detalhe-valor"></strong>
-        </div>
-      </div>
-      <details id="registros" class="registros" hidden>
-        <summary>Ver valores por data</summary>
-        <table>
-          <thead><tr><th scope="col">Data</th><th id="historico-valor" scope="col">Cotação</th></tr></thead>
-          <tbody id="registros-lista"></tbody>
-        </table>
-      </details>
-    </section>
-
-    <footer class="rodape">
-      <p>Cotações indicativas. O horário e a frequência dependem da fonte.</p>
-    </footer>
+  <main>
+    <h1>Dolar Hoje</h1>
+    <p>Entre na sua conta para acessar o site.</p>
+    <a href="https://dolar-agora-cotacao-h5rlg.foldedmeringue8.chatgpt.site/">Acessar site</a>
   </main>
 </body>
 </html>
